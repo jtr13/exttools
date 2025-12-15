@@ -14,3 +14,5 @@ Imports:
     data.table
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+URL: https://github.com/jtr13/exttools
+BugReports: https://github.com/jtr13/exttools/issues
