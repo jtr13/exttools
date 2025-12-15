@@ -1,0 +1,16 @@
+Package: exttools
+Type: Package
+Title: Tools for Analyzing Extension Packages in the Grammar of Graphics Ecosystem
+Version: 0.1.0
+Authors@R: person("Joyce", "Robbins", role = c("aut", "cre"), email = "jtr13@columbia.edu")
+Description: Utilities for identifying ggplot2 dependencies and grammar components
+    in CRAN and GitHub-based extension packages.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+    tools,
+    utils,
+    data.table
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
