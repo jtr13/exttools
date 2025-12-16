@@ -2,6 +2,7 @@
 
 export(get_components_cran)
 export(get_components_github)
+export(get_first_release)
 export(github_pages_to_repo)
 export(in_grammar_check_cran)
 export(in_grammar_check_github)

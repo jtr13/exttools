@@ -24,6 +24,7 @@
 #' get_first_release("ggplot2")
 #' get_first_release("thispackagedoesnotexist")
 #' }
+#' @export
 get_first_release <- function(pkg,
                               cran_package_db = NULL,
                               cran_archive_db = NULL) {
