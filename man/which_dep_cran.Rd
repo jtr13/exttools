@@ -2,18 +2,18 @@
 % Please edit documentation in R/get_dep_type.R
 \name{which_dep_cran}
 \alias{which_dep_cran}
-\title{Determine ggplot2 dependency for a CRAN package}
+\title{Classify ggplot2 dependency type for CRAN packages}
 \usage{
-which_dep_cran(pkg, cran_db = NULL)
+which_dep_cran(pkgs, cran_db)
 }
 \arguments{
-\item{pkg}{Package name}
+\item{pkgs}{Character vector of package names.}
 
-\item{cran_db}{Optional CRAN package database}
+\item{cran_db}{A data frame from tools::CRAN_package_db().}
 }
 \value{
-One of "depends", "imports", "suggests", or NA
+Character vector with values "depends", "imports", "suggests", or NA.
 }
 \description{
-Determine ggplot2 dependency for a CRAN package
+Classify ggplot2 dependency type for CRAN packages
 }

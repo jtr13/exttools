@@ -1,30 +1,27 @@
-#' Determine ggplot2 dependency for a CRAN package
+#' Classify ggplot2 dependency type for CRAN packages
 #'
-#' @param pkg Package name
-#' @param cran_db Optional CRAN package database
-#' @return One of "depends", "imports", "suggests", or NA
+#' @param pkgs Character vector of package names.
+#' @param cran_db A data frame from tools::CRAN_package_db().
+#'
+#' @return Character vector with values "depends", "imports", "suggests", or NA.
 #' @export
-which_dep_cran <- function(pkg, cran_db = NULL) {
+which_dep_cran <- function(pkgs, cran_db) {
+  idx <- match(pkgs, cran_db$Package)
 
-  if (is.null(cran_db)) {
-    cran_db <- tools::CRAN_package_db()
-  }
+  out <- rep(NA_character_, length(pkgs))
+  ok <- !is.na(idx)
 
-  row <- cran_db[cran_db$Package == pkg, ][1, ]
-  if (nrow(row) == 0) {
-    return(NA_character_)
-  }
+  d <- cran_db$Depends[idx[ok]]
+  i <- cran_db$Imports[idx[ok]]
+  s <- cran_db$Suggests[idx[ok]]
 
-  if (!is.na(row$Depends) && grepl("\\bggplot2\\b", row$Depends)) {
-    "depends"
-  } else if (!is.na(row$Imports) && grepl("\\bggplot2\\b", row$Imports)) {
-    "imports"
-  } else if (!is.na(row$Suggests) && grepl("\\bggplot2\\b", row$Suggests)) {
-    "suggests"
-  } else {
-    NA_character_
-  }
+  out[ok & !is.na(d) & grepl("\\bggplot2\\b", d)] <- "depends"
+  out[ok & is.na(out) & !is.na(i) & grepl("\\bggplot2\\b", i)] <- "imports"
+  out[ok & is.na(out) & !is.na(s) & grepl("\\bggplot2\\b", s)] <- "suggests"
+
+  out
 }
+
 
 
 #' Determine ggplot2 dependency for a GitHub package
