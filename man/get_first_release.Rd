@@ -4,19 +4,18 @@
 \alias{get_first_release}
 \title{Get CRAN location and first release date for an R package}
 \usage{
-get_first_release(pkg, cran_package_db = NULL, cran_archive_db = NULL)
+get_first_release(pkg, cran_package_db, archive_df)
 }
 \arguments{
 \item{pkg}{Character scalar. Package name.}
 
-\item{cran_package_db}{Optional result of \code{tools::CRAN_package_db()}.
-Recreated internally if \code{NULL}.}
+\item{cran_package_db}{A data frame returned by \code{tools::CRAN_package_db()}.}
 
-\item{cran_archive_db}{Optional result of \code{tools::CRAN_archive_db()}.
-Recreated internally if \code{NULL}.}
+\item{archive_df}{A data frame with columns \code{package} and \code{archive_date},
+typically created by \code{\link[=build_archive_df]{build_archive_df()}}.}
 }
 \value{
-A one-row tibble with columns:
+A one-row data frame with columns:
 \itemize{
 \item \code{package} – package name
 \item \code{location} – \code{"on CRAN"}, \code{"CRAN archive only"}, or \code{"neither"}
@@ -28,13 +27,15 @@ Determines whether a package is currently on CRAN, only in the CRAN archive,
 or in neither location, and returns the earliest known release date.
 }
 \details{
-Archive dates are inferred from the earliest file \code{mtime} in the CRAN
-archive. Empty archive entries are treated as missing. When both CRAN and
-archive dates are available, the earlier of the two is returned.
+The function performs constant-time lookups using precomputed inputs and is
+intended to be called repeatedly over many packages.
 }
 \examples{
 \dontrun{
-get_first_release("ggplot2")
-get_first_release("thispackagedoesnotexist")
+cran_db <- tools::CRAN_package_db()
+archive_df <- build_archive_df()
+
+get_first_release("ggplot2", cran_db, archive_df)
 }
+
 }
