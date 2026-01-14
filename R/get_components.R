@@ -2,24 +2,25 @@
 #'
 #' @param pkg_name Package name
 #' @param cran_db Optional CRAN package database
-#' @return A data.table with package, component, and function names
+#' @return A data.frame with package, component, and function names
 #' @export
 get_components_cran <- function(pkg_name, cran_db = NULL) {
+
+  empty <- data.frame(
+    package   = character(),
+    component = character(),
+    fname     = character(),
+    stringsAsFactors = FALSE
+  )
 
   if (is.null(cran_db)) {
     cran_db <- tools::CRAN_package_db()
   }
 
-  pkg_results <- data.table::data.table(
-    package   = character(),
-    component = character(),
-    fname     = character()
-  )
-
   idx <- match(pkg_name, cran_db$Package)
   if (is.na(idx)) {
     message("Error: Package ", pkg_name, " not found on CRAN.")
-    return(pkg_results)
+    return(empty)
   }
 
   version <- cran_db$Version[idx]
@@ -27,7 +28,7 @@ get_components_cran <- function(pkg_name, cran_db = NULL) {
   url <- paste0("https://cran.r-project.org/src/contrib/", tarball)
 
   temp_dir <- file.path(tempdir(), paste0("pkg_", pkg_name, "_", Sys.getpid()))
-  dir.create(temp_dir, showWarnings = FALSE)
+  dir.create(temp_dir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
 
   dest <- file.path(temp_dir, tarball)
@@ -39,7 +40,7 @@ get_components_cran <- function(pkg_name, cran_db = NULL) {
 
   if (!ok) {
     message("Failed to download or timed out: ", pkg_name)
-    return(pkg_results)
+    return(empty)
   }
 
   utils::untar(dest, exdir = temp_dir)
@@ -53,12 +54,19 @@ get_components_cran <- function(pkg_name, cran_db = NULL) {
 #'
 #' @param pkg_name Package name
 #' @param repo_url GitHub repository URL (optionally including /tree/branch/path)
-#' @return A data.table with package, component, and function names
+#' @return A data.frame with package, component, and function names
 #' @export
 get_components_github <- function(pkg_name, repo_url) {
 
+  empty <- data.frame(
+    package   = character(),
+    component = character(),
+    fname     = character(),
+    stringsAsFactors = FALSE
+  )
+
   temp_dir <- file.path(tempdir(), paste0("pkg_", pkg_name, "_", Sys.getpid()))
-  dir.create(temp_dir, showWarnings = FALSE)
+  dir.create(temp_dir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
 
   m <- regexec("^https://github\\.com/[^/]+/[^/]+/tree/[^/]+/(.+)$", repo_url)
@@ -75,15 +83,15 @@ get_components_github <- function(pkg_name, repo_url) {
 
   if (!ok) {
     message("Failed to download GitHub repo for ", pkg_name)
-    return(data.table::data.table())
+    return(empty)
   }
 
   utils::untar(dest, exdir = temp_dir)
-  repo_root <- list.dirs(temp_dir, recursive = FALSE)[1]
+  repo_root <- list.dirs(temp_dir, recursive = FALSE, full.names = TRUE)[1]
 
   pkg_dir <- if (!is.na(subdir)) file.path(repo_root, subdir) else repo_root
   if (!file.exists(pkg_dir)) {
-    return(data.table::data.table())
+    return(empty)
   }
 
   analyze_pkg_source(pkg_name, pkg_dir)
@@ -94,22 +102,22 @@ get_components_github <- function(pkg_name, repo_url) {
 
 analyze_pkg_source <- function(pkg_name, pkg_source_dir) {
 
-  pkg_results <- data.table::data.table(
+  empty <- data.frame(
     package   = character(),
     component = character(),
-    fname     = character()
+    fname     = character(),
+    stringsAsFactors = FALSE
   )
 
   ns_path <- file.path(pkg_source_dir, "NAMESPACE")
-  if (!file.exists(ns_path)) return(pkg_results)
+  if (!file.exists(ns_path)) return(empty)
 
   lines <- readLines(ns_path, warn = FALSE)
   exported <- unique(
     sub("^export\\(([^)]+)\\)$", "\\1",
         lines[grepl("^export\\(", lines)])
   )
-
-  if (!length(exported)) return(pkg_results)
+  if (!length(exported)) return(empty)
 
   patterns <- c(
     geom       = "^geom_",
@@ -120,19 +128,22 @@ analyze_pkg_source <- function(pkg_name, pkg_source_dir) {
     theme      = "^theme_"
   )
 
-  rows <- vector("list", length(patterns))
-  names(rows) <- names(patterns)
-
-  for (nm in names(patterns)) {
+  rows <- lapply(names(patterns), function(nm) {
     m <- exported[grepl(patterns[[nm]], exported)]
-    if (length(m)) {
-      rows[[nm]] <- data.table::data.table(
-        package   = pkg_name,
-        component = nm,
-        fname     = m
-      )
-    }
-  }
+    if (!length(m)) return(NULL)
 
-  data.table::rbindlist(rows, use.names = TRUE)
+    data.frame(
+      package   = rep(pkg_name, length(m)),
+      component = rep(nm, length(m)),
+      fname     = m,
+      stringsAsFactors = FALSE
+    )
+  })
+
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) return(empty)
+
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
 }

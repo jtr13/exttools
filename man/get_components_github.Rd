@@ -12,7 +12,7 @@ get_components_github(pkg_name, repo_url)
 \item{repo_url}{GitHub repository URL (optionally including /tree/branch/path)}
 }
 \value{
-A data.table with package, component, and function names
+A data.frame with package, component, and function names
 }
 \description{
 Extract ggplot2 grammar components from a GitHub repository

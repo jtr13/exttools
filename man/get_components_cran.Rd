@@ -12,7 +12,7 @@ get_components_cran(pkg_name, cran_db = NULL)
 \item{cran_db}{Optional CRAN package database}
 }
 \value{
-A data.table with package, component, and function names
+A data.frame with package, component, and function names
 }
 \description{
 Extract ggplot2 grammar components from a CRAN package
