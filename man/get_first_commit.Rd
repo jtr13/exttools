@@ -27,7 +27,7 @@ code search and is recommended when renames are suspected.}
 \item{pattern}{Optional regular expression used to match file contents.
 Defaults to matching R-style function definitions.}
 
-\item{branch}{Reserved for future use.}
+\item{branch}{Currently ignored (reserved for future use).}
 
 \item{max_commits}{Maximum number of commits to inspect before giving up.}
 }
@@ -36,45 +36,31 @@ A one-row data frame with commit metadata (\code{commit}, \code{date}, \code{aut
 \code{message}, \code{url}, \code{file}), or \code{NULL} if no match is found.
 }
 \description{
-Searches a GitHub repository for the \emph{earliest commit} in which a function
-appears in a given file, based on file contents at each commit. This is a
-GitHub-API-based approximation of:
+Finds the earliest commit in which a function appears in a file, using the
+GitHub API. This is a GitHub-based approximation of:
 }
 \details{
 \if{html}{\out{<div class="sourceCode">}}\preformatted{git log -S <function>
 }\if{html}{\out{</div>}}
 
 and does \strong{not} require a local clone.
-\subsection{How it works}{
-\enumerate{
-\item If \code{path} is not supplied, GitHub code search is used to identify a
-candidate file containing \code{function_name}.
-\item The commit history for that file path is retrieved via the GitHub API.
-\item File contents are fetched at each commit and searched for \code{pattern}.
-\item The earliest matching commit is returned.
-}
-}
-
-\subsection{Important limitations}{
-
-GitHub does \strong{not} expose:
+\subsection{Method}{
 \itemize{
-\item content-based history search
-\item rename tracking
-\item cross-file symbol history
+\item If \code{path} is not supplied, GitHub code search is used to select a candidate
+file containing \code{function_name} (currently restricted to R files).
+\item The commit history for that file path is retrieved.
+\item File contents at each commit are searched for \code{pattern}.
+\item The earliest matching commit for that file path is returned.
+}
 }
 
-As a result, this function may fail to find the \emph{true} first introduction if:
-\itemize{
-\item the function moved between files
-\item the file was renamed or deleted
-\item the symbol appeared earlier in a different path
-}
+\subsection{Limitations}{
 
-For historically exact results, a local clone and
-\verb{git log -S} are required.
+GitHub does not expose content-based history search or rename tracking.
+Results may be incomplete if the function moved between files, the file was
+renamed or deleted, or the wrong file is selected when \code{path = NULL}.
 
-ChatGPT 5.2 December 20, 2025
+For exact historical results, use a local clone and \verb{git log -S}.
 }
 }
 \examples{

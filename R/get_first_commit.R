@@ -1,8 +1,7 @@
 #' Find the first GitHub commit introducing a function
 #'
-#' Searches a GitHub repository for the *earliest commit* in which a function
-#' appears in a given file, based on file contents at each commit. This is a
-#' GitHub-API-based approximation of:
+#' Finds the earliest commit in which a function appears in a file, using the
+#' GitHub API. This is a GitHub-based approximation of:
 #'
 #' ```
 #' git log -S <function>
@@ -10,32 +9,21 @@
 #'
 #' and does **not** require a local clone.
 #'
-#' ## How it works
+#' ## Method
 #'
-#' 1. If `path` is not supplied, GitHub code search is used to identify a
-#'    candidate file containing `function_name`.
-#' 2. The commit history for that file path is retrieved via the GitHub API.
-#' 3. File contents are fetched at each commit and searched for `pattern`.
-#' 4. The earliest matching commit is returned.
+#' - If `path` is not supplied, GitHub code search is used to select a candidate
+#'   file containing `function_name` (currently restricted to R files).
+#' - The commit history for that file path is retrieved.
+#' - File contents at each commit are searched for `pattern`.
+#' - The earliest matching commit for that file path is returned.
 #'
-#' ## Important limitations
+#' ## Limitations
 #'
-#' GitHub does **not** expose:
+#' GitHub does not expose content-based history search or rename tracking.
+#' Results may be incomplete if the function moved between files, the file was
+#' renamed or deleted, or the wrong file is selected when `path = NULL`.
 #'
-#' - content-based history search
-#' - rename tracking
-#' - cross-file symbol history
-#'
-#' As a result, this function may fail to find the *true* first introduction if:
-#'
-#' - the function moved between files
-#' - the file was renamed or deleted
-#' - the symbol appeared earlier in a different path
-#'
-#' For historically exact results, a local clone and
-#' `git log -S` are required.
-#'
-#' ChatGPT 5.2 December 20, 2025
+#' For exact historical results, use a local clone and `git log -S`.
 #'
 #' @param owner GitHub repository owner (e.g. `"tidyverse"`).
 #' @param repo GitHub repository name (e.g. `"ggplot2"`).
@@ -44,7 +32,7 @@
 #'   code search and is recommended when renames are suspected.
 #' @param pattern Optional regular expression used to match file contents.
 #'   Defaults to matching R-style function definitions.
-#' @param branch Reserved for future use.
+#' @param branch Currently ignored (reserved for future use).
 #' @param max_commits Maximum number of commits to inspect before giving up.
 #'
 #' @return
@@ -62,7 +50,6 @@
 #' }
 #'
 #' @export
-
 
 get_first_commit <- function(owner, repo, function_name,
                              path = NULL,
