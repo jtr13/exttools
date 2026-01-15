@@ -2,12 +2,13 @@
 % Please edit documentation in R/get_first_commit.R
 \name{get_first_commit}
 \alias{get_first_commit}
-\title{Find the first GitHub commit introducing a function}
+\title{Find the first GitHub commit introducing a symbol}
 \usage{
 get_first_commit(
   owner,
   repo,
   function_name,
+  date_only = TRUE,
   path = NULL,
   pattern = NULL,
   branch = NULL,
@@ -15,62 +16,38 @@ get_first_commit(
 )
 }
 \arguments{
-\item{owner}{GitHub repository owner (e.g. \code{"tidyverse"}).}
+\item{owner}{GitHub account name.}
 
-\item{repo}{GitHub repository name (e.g. \code{"ggplot2"}).}
+\item{repo}{GitHub repository name.}
 
-\item{function_name}{Name of the function to search for.}
+\item{function_name}{Name of the symbol to search for.}
 
-\item{path}{Optional file path within the repository. Supplying this avoids
-code search and is recommended when renames are suspected.}
+\item{date_only}{Logical; if \code{TRUE} (default), return only the commit date.
+If \code{FALSE}, return a one-row data frame with commit metadata.}
 
-\item{pattern}{Optional regular expression used to match file contents.
-Defaults to matching R-style function definitions.}
+\item{path}{Optional path to an R source file to search. If \code{NULL},
+a suitable file is inferred automatically.}
 
-\item{branch}{Currently ignored (reserved for future use).}
+\item{pattern}{Optional regular expression used to detect the symbol
+assignment. Defaults to matching \verb{<name> <-} or \verb{<name> =}.}
+
+\item{branch}{Optional branch or ref to search. Defaults to the repository’s
+default branch.}
 
 \item{max_commits}{Maximum number of commits to inspect before giving up.}
 }
 \value{
-A one-row data frame with commit metadata (\code{commit}, \code{date}, \code{author},
-\code{message}, \code{url}, \code{file}), or \code{NULL} if no match is found.
+If \code{date_only = TRUE}, a character string giving the commit date
+(ISO 8601), or \code{NULL} if no match is found. If \code{date_only = FALSE},
+a one-row data frame with commit metadata, or \code{NULL} if no match is found.
 }
 \description{
-Finds the earliest commit in which a function appears in a file, using the
-GitHub API. This is a GitHub-based approximation of:
+Searches a GitHub repository for the earliest commit in which a given
+symbol (typically a function name) is \emph{assigned} in an R source file.
+The search is performed via the GitHub API and does not require a local clone.
 }
 \details{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{git log -S <function>
-}\if{html}{\out{</div>}}
-
-and does \strong{not} require a local clone.
-\subsection{Method}{
-\itemize{
-\item If \code{path} is not supplied, GitHub code search is used to select a candidate
-file containing \code{function_name} (currently restricted to R files).
-\item The commit history for that file path is retrieved.
-\item File contents at each commit are searched for \code{pattern}.
-\item The earliest matching commit for that file path is returned.
-}
-}
-
-\subsection{Limitations}{
-
-GitHub does not expose content-based history search or rename tracking.
-Results may be incomplete if the function moved between files, the file was
-renamed or deleted, or the wrong file is selected when \code{path = NULL}.
-
-For exact historical results, use a local clone and \verb{git log -S}.
-}
-}
-\examples{
-\dontrun{
-get_first_commit("hojsgaard", "doBy", "scale_by")
-
-get_first_commit(
-  "hojsgaard", "doBy", "scale_by",
-  path = "R/by_scaleBy.R"
-)
-}
-
+If \code{path} is not supplied, GitHub code search is used to identify candidate
+\code{.R} files, and the function selects the first file whose current contents
+actually assign the symbol before scanning its commit history.
 }
