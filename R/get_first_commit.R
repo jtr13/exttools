@@ -115,12 +115,12 @@ get_first_commit <- function(owner, repo, function_name,
       txt <- get_file_text_at_ref(path, cmt$sha)
       if (!is.na(txt) && grepl(pattern, txt, perl = TRUE)) {
         if (date_only) {
-          return(cmt$commit$author$date)
+          return(as.Date(cmt$commit$author$date))
         } else {
           sha <- cmt$sha
           return(data.frame(
             commit  = sha,
-            date    = cmt$commit$author$date,
+            date    = as.Date(cmt$commit$author$date),
             author  = cmt$commit$author$name,
             message = cmt$commit$message,
             url     = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, sha),
