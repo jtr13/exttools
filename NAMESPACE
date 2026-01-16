@@ -2,6 +2,7 @@
 
 export(build_archive_df)
 export(extract_github_repo)
+export(first_repo_commit)
 export(get_components_cran)
 export(get_components_github)
 export(get_first_commit)
