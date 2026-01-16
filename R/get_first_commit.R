@@ -188,7 +188,7 @@ first_repo_commit <- function(owner, repo, sha = NULL) {
   if (is.null(date)) date <- cmt$commit$committer$date
 
   data.frame(
-    date    = date,
+    date    = as.Date(date),
     author  = cmt$commit$author$name,
     message = cmt$commit$message,
     url     = cmt$html_url,
