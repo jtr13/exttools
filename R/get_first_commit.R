@@ -1,3 +1,180 @@
+#' Find the first commit where a function is exported
+#'
+#' Identifies the earliest Git commit in which a given symbol becomes
+#' *explicitly exported* in a package’s `NAMESPACE` file (e.g. via
+#' `export(foo)` or `export("foo")`).
+#'
+#' The function works by cloning the package repository locally (once, into
+#' a cache directory) and searching the Git history of the `NAMESPACE` file.
+#' After the initial clone, all operations are local and do not use the
+#' GitHub API, avoiding rate-limit issues.
+#'
+#' This function detects **explicit exports only**. It does not currently
+#' interpret `exportPattern()` semantics; packages that rely solely on
+#' pattern-based exports may return `NULL`.
+#'
+#' @param owner GitHub account name (e.g. `"YuLab-SMU"`).
+#' @param repo GitHub repository name (e.g. `"ggtree"`).
+#' @param function_name Name of the symbol to search for (e.g. `"geom_aline"`).
+#' @param date_only Logical; if `TRUE` (default), return only the commit date.
+#'   If `FALSE`, return a one-row data frame with commit metadata.
+#' @param branch Optional branch or ref to search. Defaults to the repository’s
+#'   default branch.
+#' @param cache_dir Directory used to cache cloned repositories. If not
+#'   supplied explicitly, the function uses the value of the
+#'   `ggext.git_cache` option, falling back to a temporary directory.
+#' @param file Path to the NAMESPACE file within the repository.
+#'   Defaults to `"NAMESPACE"`.
+#'
+#' @return
+#' If `date_only = TRUE`, a `Date` giving the commit date when the symbol was
+#' first exported, or `NULL` if no explicit export is found.
+#'
+#' If `date_only = FALSE`, a one-row `data.frame` with columns:
+#' \describe{
+#'   \item{date}{Commit date}
+#'   \item{author}{Commit author name}
+#'   \item{message}{Commit message}
+#'   \item{url}{URL of the commit on GitHub}
+#'   \item{file}{File searched (usually `NAMESPACE`)}
+#' }
+#'
+#' @details
+#' The initial call for a given repository may be slow due to cloning.
+#' Subsequent calls are fast as long as the cached clone is reused.
+#'
+#' For best performance across sessions, set a persistent cache location:
+#' \preformatted{
+#' options(ggext.git_cache = "~/Library/Caches/ggext_git")
+#' }
+#'
+#' @seealso get_first_commit
+#'
+#' @examples
+#' \dontrun{
+#' get_first_export("YuLab-SMU", "ggtree", "geom_aline")
+#' get_first_export("YuLab-SMU", "ggtree", "geom_aline", date_only = FALSE)
+#' }
+#'
+#' @export
+
+get_first_export <- function(owner, repo, function_name,
+                             date_only = TRUE,
+                             branch = NULL,
+                             cache_dir = getOption(
+                               "ggext.git_cache",
+                               file.path(tempdir(), "gh_repo_cache")
+                             ),
+                             file = "NAMESPACE") {
+
+  if (!requireNamespace("processx", quietly = TRUE)) {
+    stop("Package 'processx' is required. Install it first.")
+  }
+
+  if (!dir.exists(cache_dir)) dir.create(cache_dir, recursive = TRUE)
+
+  repo_dir <- file.path(cache_dir, paste0(owner, "__", repo))
+  remote   <- sprintf("https://github.com/%s/%s.git", owner, repo)
+
+  run_git <- function(args) {
+    processx::run(
+      "git",
+      args = args,
+      echo_cmd = FALSE,
+      echo = FALSE,
+      error_on_status = FALSE,
+      env = c("GIT_TERMINAL_PROMPT" = "0")
+    )
+  }
+
+  # Clone or refresh (reclone on fetch failure)
+  if (!dir.exists(file.path(repo_dir, ".git"))) {
+    if (dir.exists(repo_dir)) unlink(repo_dir, recursive = TRUE, force = TRUE)
+    dir.create(repo_dir, recursive = TRUE)
+    res <- run_git(c("clone", remote, repo_dir))
+    if (res$status != 0L) stop(paste(c(res$stdout, res$stderr), collapse = "\n"))
+  } else {
+    res <- run_git(c("-C", repo_dir, "fetch", "--all", "--prune"))
+    if (res$status != 0L) {
+      unlink(repo_dir, recursive = TRUE, force = TRUE)
+      dir.create(repo_dir, recursive = TRUE)
+      res2 <- run_git(c("clone", remote, repo_dir))
+      if (res2$status != 0L) stop(paste(c(res2$stdout, res2$stderr), collapse = "\n"))
+    }
+  }
+
+  # Choose ref
+  ref <- branch
+  if (is.null(ref) || !nzchar(ref)) {
+    res <- run_git(c("-C", repo_dir, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"))
+    if (res$status == 0L && nzchar(res$stdout)) {
+      ref <- sub("^refs/remotes/origin/", "", trimws(strsplit(res$stdout, "\n", fixed = TRUE)[[1]][1]))
+    } else {
+      ref <- "HEAD"
+    }
+  }
+
+  # Checkout quietly
+  run_git(c("-C", repo_dir, "checkout", "-q", ref))
+
+  fmt <- "%H%x09%ad%x09%an%x09%s"
+
+  needles <- c(
+    sprintf("export(%s", function_name),
+    sprintf('export("%s"', function_name),
+    sprintf("export('%s'", function_name)
+  )
+
+  parse_git_log <- function(stdout) {
+    if (!nzchar(stdout)) return(character())
+    lines <- strsplit(stdout, "\n", fixed = TRUE)[[1]]
+    lines <- trimws(lines)
+    lines[nzchar(lines)]
+  }
+
+  search_one <- function(needle) {
+    res <- run_git(c(
+      "-C", repo_dir, "log",
+      "--reverse",
+      "--date=short",
+      paste0("--format=", fmt),
+      "-S", needle,
+      "--", file
+    ))
+    if (res$status != 0L) return(NULL)
+
+    lines <- parse_git_log(res$stdout)
+    if (!length(lines)) return(NULL)
+
+    parts <- strsplit(lines[1], "\t", fixed = TRUE)[[1]]
+    if (length(parts) < 4) return(NULL)
+
+    list(
+      sha = parts[1],
+      date = as.Date(parts[2]),
+      author = parts[3],
+      message = parts[4]
+    )
+  }
+
+  hits <- Filter(Negate(is.null), lapply(needles, search_one))
+  if (!length(hits)) return(NULL)
+
+  hit <- hits[[which.min(vapply(hits, function(x) as.numeric(x$date), numeric(1)))]]
+
+  if (isTRUE(date_only)) return(hit$date)
+
+  data.frame(
+    date    = hit$date,
+    author  = hit$author,
+    message = hit$message,
+    url     = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, hit$sha),
+    file    = file,
+    stringsAsFactors = FALSE
+  )
+}
+
+
 #' Find the first GitHub commit introducing a symbol
 #'
 #' Searches a GitHub repository for the earliest commit in which a given
@@ -195,4 +372,5 @@ first_repo_commit <- function(owner, repo, sha = NULL) {
     stringsAsFactors = FALSE
   )
 }
+
 
