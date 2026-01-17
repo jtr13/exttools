@@ -14,6 +14,8 @@
   : Extract ggplot2 grammar components from a GitHub repository
 - [`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md)
   : Find the first GitHub commit introducing a symbol
+- [`get_first_export()`](https://jtr13.github.io/exttools/reference/get_first_export.md)
+  : Find the first commit where a function is exported
 - [`get_first_release()`](https://jtr13.github.io/exttools/reference/get_first_release.md)
   : Get CRAN location and first release date for an R package
 - [`github_pages_to_repo()`](https://jtr13.github.io/exttools/reference/github_pages_to_repo.md)
