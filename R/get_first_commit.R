@@ -67,6 +67,10 @@ get_first_export <- function(owner, repo, function_name,
                              ),
                              file = "NAMESPACE") {
 
+  if (is.na(owner) || is.na(repo)) {
+    return(NA)
+  }
+
   if (!requireNamespace("processx", quietly = TRUE)) {
     stop("Package 'processx' is required. Install it first.")
   }
