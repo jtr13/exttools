@@ -68,7 +68,7 @@ get_first_export <- function(owner, repo, function_name,
                              file = "NAMESPACE") {
 
   if (is.na(owner) || is.na(repo)) {
-    return(NA)
+    return(as.Date(NA))
   }
 
   if (!requireNamespace("processx", quietly = TRUE)) {
