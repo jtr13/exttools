@@ -13,7 +13,8 @@ Imports:
     utils,
     gh,
     base64enc,
-    httr2
+    httr2,
+    processx
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 URL: https://github.com/jtr13/exttools, https://jtr13.github.io/exttools/
