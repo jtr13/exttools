@@ -3,6 +3,10 @@
 # This script creates "in_grammar_all.csv"
 # See comments at the top of classify_imports_depends.R
 # Adding ggplot2 even though it doesn't import or depend on ggplot2 :-)
+# January 17, 2026 There are newer versions of some or maybe even all of this
+# I think but not sure where, maybe in R/ or in extensions-review
+# get_components.R has better ways to find in grammar components
+#
 
 
 # ----------------------------------------------------------------------
@@ -29,11 +33,6 @@ CRAN_DB <- tryCatch({
   stop("Could not access CRAN package list. Check your internet connection or CRAN repository setting.")
 })
 message("CRAN list fetched successfully.")
-
-# ----------------------------------------------------------------------
-# CORE ANALYSIS FUNCTION
-# Joyce: newer version in extensions-review
-# ----------------------------------------------------------------------
 
 analyze_functions_by_row_final <- function(pkg_name, pkg_db) {
 
@@ -174,7 +173,7 @@ u <- url(paste0("https://packagemanager.posit.co/cran/",
 ap <- read.dcf(u)
 close(u)
 
-cran_archive <- as.data.frame(ap, stringsAsFactors = FALSE)
+cran_archive <- as.data.frame(ap)
 
 imports_depends <- cran_archive |>
   mutate(

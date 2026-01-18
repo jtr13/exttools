@@ -18,7 +18,6 @@ typically created by \code{\link[=build_archive_df]{build_archive_df()}}.}
 A one-row data frame with columns:
 \itemize{
 \item \code{package} – package name
-\item \code{location} – \code{"on CRAN"}, \code{"CRAN archive only"}, or \code{"neither"}
 \item \code{first_release} – earliest known release date (\code{Date}) or \code{NA}
 }
 }

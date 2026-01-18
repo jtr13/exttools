@@ -58,7 +58,6 @@ build_archive_df <- function(cran_archive_db = NULL) {
 #'
 #' @return A one-row data frame with columns:
 #' * `package` – package name
-#' * `location` – `"on CRAN"`, `"CRAN archive only"`, or `"neither"`
 #' * `first_release` – earliest known release date (`Date`) or `NA`
 #'
 #' @details
@@ -81,14 +80,6 @@ get_first_release <- function(pkg, cran_package_db, archive_df) {
   on_cran    <- !is.na(idx_cran)
   in_archive <- !is.na(idx_arch)
 
-  location <- if (on_cran) {
-    "on CRAN"
-  } else if (in_archive) {
-    "CRAN archive only"
-  } else {
-    "neither"
-  }
-
   cran_date <- if (on_cran) {
     as.Date(cran_package_db$Published[idx_cran])
   } else {
@@ -106,7 +97,6 @@ get_first_release <- function(pkg, cran_package_db, archive_df) {
 
   data.frame(
     package = pkg,
-    location = location,
     first_release = first_release
   )
 }

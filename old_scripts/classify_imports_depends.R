@@ -7,7 +7,7 @@
 # in grammar components only
 #
 # Ideally this should be done in one pass but it takes several
-# hours to go through 4000+ packages
+# hours to go through 4000+ packages (but it could be done )
 
 # ----------------------------------------------------------------------
 library(stringr)
