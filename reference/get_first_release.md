@@ -33,8 +33,6 @@ A one-row data frame with columns:
 
 - `package` – package name
 
-- `location` – `"on CRAN"`, `"CRAN archive only"`, or `"neither"`
-
 - `first_release` – earliest known release date (`Date`) or `NA`
 
 ## Details
