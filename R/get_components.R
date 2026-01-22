@@ -123,9 +123,10 @@ analyze_pkg_source <- function(pkg_name, pkg_source_dir) {
     geom       = "^geom_",
     stat       = "^stat_",
     scale      = "^scale_",
-    coordinate = "^coord_",
+    coord      = "^coord_",
     facet      = "^facet_",
-    theme      = "^theme_"
+    theme      = "^theme_",
+    position   = "^position_"
   )
 
   rows <- lapply(names(patterns), function(nm) {
