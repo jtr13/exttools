@@ -7,6 +7,7 @@
 get_components_cran <- function(pkg_name, cran_db = NULL, cache_root = "~/CRAN") {
   cache_root <- path.expand(cache_root)
   message("Processing ", pkg_name)
+
   empty <- data.frame(
     package   = character(),
     component = character(),
@@ -26,41 +27,45 @@ get_components_cran <- function(pkg_name, cran_db = NULL, cache_root = "~/CRAN")
   tarball <- paste0(pkg_name, "_", version, ".tar.gz")
   url <- paste0("https://cran.r-project.org/src/contrib/", tarball)
 
-  cache_dir   <- file.path(cache_root, pkg_name, version)
-  cache_src   <- file.path(cache_dir, pkg_name)
-  cache_tar   <- file.path(cache_dir, tarball)
-
+  cache_dir <- file.path(cache_root, pkg_name, version)
+  cache_ns  <- file.path(cache_dir, "NAMESPACE")
   dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
 
-  # Fast path: already unpacked
-  if (dir.exists(cache_src)) {
-    return(analyze_pkg_source(pkg_name, cache_src))
+  # If cached, use it (and also keep cache_dir clean)
+  if (file.exists(cache_ns)) {
+    junk <- setdiff(list.files(cache_dir, all.files = TRUE, no.. = TRUE), "NAMESPACE")
+    if (length(junk)) unlink(file.path(cache_dir, junk), recursive = TRUE, force = TRUE)
+    return(analyze_pkg_source(pkg_name, cache_dir))
   }
 
-  # Download tarball only if missing
-  if (!file.exists(cache_tar)) {
-    ok <- tryCatch(
-      utils::download.file(url, cache_tar, quiet = TRUE) == 0,
-      error = function(e) FALSE
-    )
-    if (!ok) {
-      message("Failed to download or timed out: ", pkg_name)
-      return(empty)
-    }
-  }
+  td <- tempfile(pattern = paste0("ns_", pkg_name, "_"))
+  dir.create(td, recursive = TRUE, showWarnings = FALSE)
+  on.exit(unlink(td, recursive = TRUE, force = TRUE), add = TRUE)
 
-  # Untar into cache_dir (creates cache_src)
-  ok2 <- tryCatch(
-    { utils::untar(cache_tar, exdir = cache_dir); TRUE },
-    error = function(e) FALSE
-  )
-  if (!ok2 || !dir.exists(cache_src)) {
-    message("Failed to untar: ", pkg_name)
+  tf <- file.path(td, "pkg.tar.gz")
+  ok <- tryCatch(utils::download.file(url, tf, quiet = TRUE) == 0, error = function(e) FALSE)
+  if (!ok) {
+    message("Failed to download or timed out: ", pkg_name)
     return(empty)
   }
 
-  analyze_pkg_source(pkg_name, cache_src)
+  ns_in_tar <- file.path(pkg_name, "NAMESPACE")
+  ok2 <- tryCatch({ utils::untar(tf, exdir = td, files = ns_in_tar); TRUE }, error = function(e) FALSE)
+  src_ns <- file.path(td, ns_in_tar)
+  if (!ok2 || !file.exists(src_ns)) {
+    message("Failed to extract NAMESPACE: ", pkg_name)
+    return(empty)
+  }
+
+  file.copy(src_ns, cache_ns, overwrite = TRUE)
+
+  # Hard guarantee: cache_dir contains only NAMESPACE
+  junk <- setdiff(list.files(cache_dir, all.files = TRUE, no.. = TRUE), "NAMESPACE")
+  if (length(junk)) unlink(file.path(cache_dir, junk), recursive = TRUE, force = TRUE)
+
+  analyze_pkg_source(pkg_name, cache_dir)
 }
+
 
 
 #' Extract ggplot2 grammar components from a GitHub repository
