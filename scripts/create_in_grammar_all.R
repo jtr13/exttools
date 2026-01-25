@@ -9,12 +9,12 @@ cran_db <- tools::CRAN_package_db()
 
 imports_depends_suggests <- data.frame(
   package = cran_db$Package,
-  which_dep = map(cran_db$Package, which_dep_cran, cran_db) |>
+  dep_type = map(cran_db$Package, which_dep_cran, cran_db) |>
     unlist()
 )
 
 packages_to_check <- imports_depends_suggests |>
-  filter(!is.na(which_dep)) |>
+  filter(!is.na(dep_type)) |>
   pull(package)
 
 
