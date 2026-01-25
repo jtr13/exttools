@@ -3,6 +3,7 @@
 # and exttools/scripts/classify_imports_depends.R
 
 library(tidyverse)
+library(exttools) # install first!
 
 cran_db <- tools::CRAN_package_db()
 
@@ -17,8 +18,10 @@ packages_to_check <- imports_depends_suggests |>
   pull(package)
 
 
-in_out_grammar <- map(packages_to_check, get_components_cran, cran_db) |>
+in_grammar_all <- map(packages_to_check, get_components_cran, cran_db) |>
   list_rbind()
 
-write_csv(in_out_grammar, "in_out_grammar_v2025_12_07_b.csv")
+in_grammar_all <- left_join(in_grammar_all, imports_depends_suggests)
+
+write_csv(in_grammar_all, "~/extensions-shiny/in_grammar_all_v2026_01_24.csv")
 
