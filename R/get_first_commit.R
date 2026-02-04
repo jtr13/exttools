@@ -66,6 +66,7 @@ get_first_export <- function(owner, repo, function_name,
                                file.path(tempdir(), "gh_repo_cache")
                              ),
                              file = "NAMESPACE") {
+  message("Processing:", owner, repo, function_name)
 
   if (is.na(owner) || is.na(repo)) {
     return(as.Date(NA))

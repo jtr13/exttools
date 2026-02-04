@@ -1,4 +1,4 @@
-# create in_grammar_all.csv
+# create in_grammar_cran.csv
 # replaces exttools/scripts/classify_in_grammar_OLD.R
 # and exttools/scripts/classify_imports_depends.R
 
@@ -17,11 +17,16 @@ packages_to_check <- imports_depends_suggests |>
   filter(!is.na(dep_type)) |>
   pull(package)
 
+# Manually add ggplot2
+packages_to_check <-sort(c("ggplot2", packages_to_check))
 
-in_grammar_all <- map(packages_to_check, get_components_cran, cran_db) |>
+
+in_grammar_cran <- map(packages_to_check, get_components_cran, cran_db) |>
   list_rbind()
 
-in_grammar_all <- left_join(in_grammar_all, imports_depends_suggests)
+in_grammar_cran <- left_join(in_grammar_cran, imports_depends_suggests)
 
-write_csv(in_grammar_all, "~/extensions-shiny/in_grammar_all_v2026_01_24.csv")
+
+
+write_csv(in_grammar_cran, "~/extensions-shiny/in_grammar_cran_v2026_01_25.csv")
 
