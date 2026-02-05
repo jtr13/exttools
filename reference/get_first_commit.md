@@ -1,9 +1,11 @@
-# Find the first GitHub commit introducing a symbol
+# Find the first commit that introduces a function definition in a GitHub repo
 
-Searches a GitHub repository for the earliest commit in which a given
-symbol (typically a function name) is *assigned* in an R source file.
-The search is performed via the GitHub API and does not require a local
-clone.
+Clones (or refreshes) a GitHub repository into a local cache directory,
+checks out a target ref (branch or default), then scans commits (oldest
+to newest) that *touch* occurrences of `function_name` under `R/`. For
+each candidate commit, it verifies the function is actually defined
+(assigned via `<-` or `=`) somewhere in the tree at that commit using
+`git grep`.
 
 ## Usage
 
@@ -12,11 +14,11 @@ get_first_commit(
   owner,
   repo,
   function_name,
-  date_only = TRUE,
-  path = NULL,
+  date_only = FALSE,
   pattern = NULL,
   branch = NULL,
-  max_commits = Inf
+  max_commits = Inf,
+  cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))
 )
 ```
 
@@ -24,49 +26,88 @@ get_first_commit(
 
 - owner:
 
-  GitHub account name.
+  Character scalar. GitHub username/organization.
 
 - repo:
 
-  GitHub repository name.
+  Character scalar. GitHub repository name.
 
 - function_name:
 
-  Name of the symbol to search for.
+  Character scalar. Symbol to search for (e.g. `"geom_foo"`).
 
 - date_only:
 
-  Logical; if `TRUE` (default), return only the commit date. If `FALSE`,
-  return a one-row data frame with commit metadata.
-
-- path:
-
-  Optional path to an R source file to search. If `NULL`, a suitable
-  file is inferred automatically.
+  Logical; if `TRUE`, return only the `Date` of the first verified
+  defining commit.
 
 - pattern:
 
-  Optional regular expression used to detect the symbol assignment.
-  Defaults to matching `<name> <-` or `<name> =`.
+  Optional character regex intended for verification. If `NULL`,
+  defaults to a PCRE pattern approximating an assignment to
+  `function_name`. Note: this argument is currently not used by the
+  implementation (verification is done via `git grep -E` with an
+  internally constructed ERE).
 
 - branch:
 
-  Optional branch or ref to search. Defaults to the repository’s default
-  branch.
+  Optional character scalar. Ref to check out before searching. If
+  `NULL`/empty, the function uses `origin/HEAD` when available,
+  otherwise `HEAD`.
 
 - max_commits:
 
-  Maximum number of commits to inspect before giving up.
+  Maximum number of candidate commits to verify (in order). Use to cap
+  runtime on very large histories. Defaults to `Inf` (no cap).
+
+- cache_dir:
+
+  Directory used to cache cloned repositories. Defaults to
+  `getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))`.
 
 ## Value
 
-If `date_only = TRUE`, a character string giving the commit date (ISO
-8601), or `NULL` if no match is found. If `date_only = FALSE`, a one-row
-data frame with commit metadata, or `NULL` if no match is found.
+If a defining commit is found:
+
+- If `date_only = TRUE`, a `Date`.
+
+- Otherwise, a one-row `data.frame` with columns: `date`, `author`,
+  `message`, `url`, `file`.
+
+If not found (or `owner`/`repo` is `NA`), returns `NULL`.
 
 ## Details
 
-If `path` is not supplied, GitHub code search is used to identify
-candidate `.R` files, and the function selects the first file whose
-current contents actually assign the symbol before scanning its commit
-history.
+The return value is either the commit date (when `date_only = TRUE`) or
+a one-row `data.frame` with commit metadata and a GitHub URL.
+
+Candidate commits are obtained with:
+
+- `git log --reverse -S <function_name> <ref> -- R`
+
+which searches for commits where the literal string `function_name`
+appears in diffs under `R/` (additions or removals). Each candidate is
+then validated by searching the repository *tree* at that commit with
+`git grep` for an assignment-like pattern such as `foo <-` or `foo =`.
+
+If the local cached clone is corrupted or fetch fails, the cache
+directory for that repo is deleted and recloned.
+
+## See also
+
+[`processx::run`](http://processx.r-lib.org/reference/run.md)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Return full metadata for first defining commit of "geom_ridgeline"
+x <- get_first_commit("wilkelab", "ggridges", "geom_ridgeline")
+
+# Date only
+d <- get_first_commit("tidyverse", "ggplot2", "geom_point", date_only = TRUE)
+
+# Limit verification work
+x2 <- get_first_commit("someorg", "somerepo", "foo", max_commits = 200)
+} # }
+```
