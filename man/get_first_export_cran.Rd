@@ -6,7 +6,7 @@
 \usage{
 get_first_export_cran(
   package,
-  function_name,
+  fname,
   date_only = FALSE,
   repos = "https://cloud.r-project.org",
   cache_dir = getOption("ggext.cran_cache", file.path(tempdir(), "cran_export_cache"))
@@ -15,7 +15,7 @@ get_first_export_cran(
 \arguments{
 \item{package}{Character. The name of the CRAN package (e.g. \code{"ggplot2"}).}
 
-\item{function_name}{Character. The symbol to search for (e.g. \code{"geom_point"}).}
+\item{fname}{Character. The symbol to search for (e.g. \code{"geom_point"}).}
 
 \item{date_only}{Logical. If \code{TRUE}, return only the publication \code{Date}.
 Defaults to \code{FALSE}.}
@@ -33,6 +33,7 @@ If \code{date_only = TRUE}, a \code{Date} object or \code{NA}.
 Otherwise, a one-row \code{data.frame} with columns:
 \itemize{
 \item \code{package}: package name
+\item \code{fname}: function name
 \item \code{version}: CRAN version where the symbol is first exported
 \item \code{date}: CRAN publication date (may be \code{NA} for older releases)
 \item \code{is_reexport}: logical indicating whether the symbol is imported via

@@ -11,7 +11,7 @@
 #' downloading and parsing CRAN tarballs.
 #'
 #' @param package Character. The name of the CRAN package (e.g. `"ggplot2"`).
-#' @param function_name Character. The symbol to search for (e.g. `"geom_point"`).
+#' @param fname Character. The symbol to search for (e.g. `"geom_point"`).
 #' @param date_only Logical. If `TRUE`, return only the publication `Date`.
 #'   Defaults to `FALSE`.
 #' @param repos Character. The CRAN mirror URL. Defaults to
@@ -25,6 +25,7 @@
 #'
 #' Otherwise, a one-row `data.frame` with columns:
 #' - `package`: package name
+#' - `fname`: function name
 #' - `version`: CRAN version where the symbol is first exported
 #' - `date`: CRAN publication date (may be `NA` for older releases)
 #' - `is_reexport`: logical indicating whether the symbol is imported via
@@ -33,7 +34,7 @@
 #' Returns `NULL` if the symbol is never exported.
 #'
 #' @export
-get_first_export_cran <- function(package, function_name,
+get_first_export_cran <- function(package, fname,
                                   date_only = FALSE,
                                   repos = "https://cloud.r-project.org",
                                   cache_dir = getOption(
@@ -42,8 +43,8 @@ get_first_export_cran <- function(package, function_name,
                                   )) {
   message("Processing: ", package)
 
-  if (any(is.na(c(package, function_name))) ||
-      !nzchar(package) || !nzchar(function_name)) {
+  if (any(is.na(c(package, fname))) ||
+      !nzchar(package) || !nzchar(fname)) {
     return(if (date_only) as.Date(NA) else NULL)
   }
 
@@ -179,7 +180,7 @@ get_first_export_cran <- function(package, function_name,
     if (is.null(info)) next
 
     exported <- any(grepl(
-      sprintf("^\\s*export\\s*\\(\\s*[^)]*\\b%s\\b", function_name),
+      sprintf("^\\s*export\\s*\\(\\s*[^)]*\\b%s\\b", fname),
       info$ns,
       perl = TRUE
     ))
@@ -188,17 +189,17 @@ get_first_export_cran <- function(package, function_name,
       if (date_only) return(info$date)
 
       is_reexport <- any(grepl(
-        sprintf("^\\s*importFrom\\s*\\([^,]+,\\s*[^)]*\\b%s\\b", function_name),
+        sprintf("^\\s*importFrom\\s*\\([^,]+,\\s*[^)]*\\b%s\\b", fname),
         info$ns,
         perl = TRUE
       ))
 
       return(data.frame(
         package = package,
+        fname = fname,
         version = info$version,
         date = info$date,
-        is_reexport = is_reexport,
-        stringsAsFactors = FALSE
+        is_reexport = is_reexport
       ))
     }
   }
@@ -224,7 +225,7 @@ get_first_export_cran <- function(package, function_name,
 #'
 #' @param owner GitHub account name (e.g. `"YuLab-SMU"`).
 #' @param repo GitHub repository name (e.g. `"ggtree"`).
-#' @param function_name Name of the symbol to search for (e.g. `"geom_aline"`).
+#' @param fname Name of the symbol to search for (e.g. `"geom_aline"`).
 #' @param date_only Logical; if `TRUE` (default), return only the commit date.
 #'   If `FALSE`, return a one-row data frame with commit metadata.
 #' @param branch Optional branch or ref to search. Defaults to the repository’s
@@ -268,7 +269,7 @@ get_first_export_cran <- function(package, function_name,
 #' }
 #'
 #' @export
-get_first_export_github <- function(owner, repo, function_name,
+get_first_export_github <- function(owner, repo, fname,
                                     date_only = TRUE,
                                     branch = NULL,
                                     cache_dir = getOption(
@@ -276,7 +277,7 @@ get_first_export_github <- function(owner, repo, function_name,
                                       file.path(tempdir(), "gh_repo_cache")
                                     ),
                                     file = "NAMESPACE") {
-  message("Processing:", owner, repo, function_name)
+  message("Processing:", owner, repo, fname)
 
   if (is.na(owner) || is.na(repo)) {
     return(NULL)
@@ -335,9 +336,9 @@ get_first_export_github <- function(owner, repo, function_name,
   fmt <- "%H%x09%ad%x09%an%x09%s"
 
   needles <- c(
-    sprintf("export(%s", function_name),
-    sprintf('export("%s"', function_name),
-    sprintf("export('%s'", function_name)
+    sprintf("export(%s", fname),
+    sprintf('export("%s"', fname),
+    sprintf("export('%s'", fname)
   )
 
   parse_git_log <- function(stdout) {

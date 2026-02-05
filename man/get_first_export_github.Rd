@@ -7,7 +7,7 @@
 get_first_export_github(
   owner,
   repo,
-  function_name,
+  fname,
   date_only = TRUE,
   branch = NULL,
   cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache")),
@@ -19,7 +19,7 @@ get_first_export_github(
 
 \item{repo}{GitHub repository name (e.g. \code{"ggtree"}).}
 
-\item{function_name}{Name of the symbol to search for (e.g. \code{"geom_aline"}).}
+\item{fname}{Name of the symbol to search for (e.g. \code{"geom_aline"}).}
 
 \item{date_only}{Logical; if \code{TRUE} (default), return only the commit date.
 If \code{FALSE}, return a one-row data frame with commit metadata.}
