@@ -2,18 +2,59 @@
 % Please edit documentation in R/get_components.R
 \name{get_components_cran}
 \alias{get_components_cran}
-\title{Extract ggplot2 grammar components from a CRAN package}
+\title{Extract ggplot2-extension components from a CRAN package}
 \usage{
-get_components_cran(pkg_name, cran_db = NULL)
+get_components_cran(pkg_name, cran_db = NULL, cache_root = "~/CRAN")
 }
 \arguments{
-\item{pkg_name}{Package name}
+\item{pkg_name}{Character scalar. CRAN package name.}
 
-\item{cran_db}{Optional CRAN package database}
+\item{cran_db}{Optional CRAN package database as returned by
+\code{\link[tools:CRANtools]{tools::CRAN_package_db()}}. If \code{NULL}, it is computed on demand.}
+
+\item{cache_root}{Character scalar. Root directory used for on-disk caching of
+extracted \code{NAMESPACE} files. Default is \code{"~/CRAN"}.}
 }
 \value{
-A data.frame with package, component, and function names
+A \code{data.frame} with columns:
+\describe{
+\item{package}{Package name.}
+\item{component}{Component type/category identified by \code{analyze_pkg_source()}.}
+\item{fname}{Function name.}
+}
+If the package cannot be found on CRAN, downloaded, or its \code{NAMESPACE} cannot be
+extracted, returns an empty data frame with the same columns.
 }
 \description{
-Extract ggplot2 grammar components from a CRAN package
+Downloads a CRAN source tarball for \code{pkg_name} (unless cached), extracts the
+package \code{NAMESPACE}, and calls \code{analyze_pkg_source()} to identify exported
+ggplot2 “grammar” components (e.g., functions named like \verb{geom_*}, \verb{stat_*},
+\verb{scale_*}, etc., depending on what \code{analyze_pkg_source()} detects).
+}
+\details{
+The function caches the \code{NAMESPACE} file at \verb{cache_root/<pkg>/<version>/NAMESPACE}
+and keeps that directory “clean” by removing any other files that might be
+present.
+
+Network access is required on the first run for a given package version. The
+cache is keyed by package version from \code{cran_db}, so updates on CRAN will be
+cached separately.
+
+This function assumes \code{analyze_pkg_source(pkg_name, cache_dir)} exists and can
+operate given a directory that contains (at minimum) a \code{NAMESPACE} file.
+}
+\examples{
+\dontrun{
+# Using a precomputed CRAN DB speeds up repeated calls
+db <- tools::CRAN_package_db()
+out <- get_components_cran("ggrepel", cran_db = db, cache_root = tempdir())
+head(out)
+
+# Use the default cache under ~/CRAN
+out2 <- get_components_cran("ggridges")
+}
+
+}
+\seealso{
+\code{\link[tools:CRANtools]{tools::CRAN_package_db()}}, \code{\link[utils:download.file]{utils::download.file()}}, \code{\link[utils:untar]{utils::untar()}}
 }

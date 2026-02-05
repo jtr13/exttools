@@ -11,8 +11,6 @@ LazyData: true
 Imports:
     tools,
     utils,
-    gh,
-    base64enc,
     httr2,
     processx
 Roxygen: list(markdown = TRUE)
