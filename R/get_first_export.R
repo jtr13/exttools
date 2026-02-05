@@ -40,6 +40,7 @@ get_first_export_cran <- function(package, function_name,
                                     "ggext.cran_cache",
                                     file.path(tempdir(), "cran_export_cache")
                                   )) {
+  message("Processing: ", package)
 
   if (any(is.na(c(package, function_name))) ||
       !nzchar(package) || !nzchar(function_name)) {
@@ -102,7 +103,18 @@ get_first_export_cran <- function(package, function_name,
   # ---- parse one version ----
   parse_version <- function(url, version) {
     cache_path <- file.path(parsed_cache, paste0(version, ".rds"))
-    if (file.exists(cache_path)) return(readRDS(cache_path))
+
+    # If cache exists, try reading it; if malformed, delete and rebuild.
+    if (file.exists(cache_path)) {
+      cached <- tryCatch(readRDS(cache_path), error = function(e) NULL)
+      ok <- is.list(cached) &&
+        all(c("version", "date", "ns") %in% names(cached)) &&
+        length(cached$version) == 1 &&
+        (inherits(cached$date, "Date") || (length(cached$date) == 1 && is.na(cached$date))) &&
+        is.character(cached$ns)
+      if (ok) return(cached)
+      unlink(cache_path, force = TRUE)
+    }
 
     tmp_tar <- tempfile(fileext = ".tar.gz")
     on.exit(unlink(tmp_tar), add = TRUE)
@@ -113,26 +125,39 @@ get_first_export_cran <- function(package, function_name,
     )
     if (ok != 0) return(NULL)
 
-    members <- utils::untar(tmp_tar, list = TRUE)
+    members <- tryCatch(utils::untar(tmp_tar, list = TRUE), error = function(e) character())
+    if (!length(members)) return(NULL)
+
     targets <- members[
       grepl(sprintf("^(\\./)?%s/(NAMESPACE|DESCRIPTION)$", package), members)
     ]
+    if (!length(targets)) return(NULL)
 
     tmp_dir <- tempfile()
     dir.create(tmp_dir)
     on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
-    utils::untar(tmp_tar, files = targets, exdir = tmp_dir)
 
-    ns_file <- list.files(tmp_dir, "NAMESPACE", recursive = TRUE, full.names = TRUE)[1]
-    desc_file <- list.files(tmp_dir, "DESCRIPTION", recursive = TRUE, full.names = TRUE)[1]
+    # Extract only NAMESPACE + DESCRIPTION if present
+    tryCatch(
+      utils::untar(tmp_tar, files = targets, exdir = tmp_dir),
+      error = function(e) return(NULL)
+    )
 
-    ns <- readLines(ns_file, warn = FALSE)
-    desc <- read.dcf(desc_file)
+    ns_files <- list.files(tmp_dir, "NAMESPACE", recursive = TRUE, full.names = TRUE)
+    desc_files <- list.files(tmp_dir, "DESCRIPTION", recursive = TRUE, full.names = TRUE)
+    if (!length(ns_files) || !length(desc_files)) return(NULL)
 
+    ns <- readLines(ns_files[1], warn = FALSE)
+    desc <- tryCatch(read.dcf(desc_files[1]), error = function(e) NULL)
+    if (is.null(desc)) return(NULL)
+
+    # Robust date extraction: Date/Publication -> Date -> NA
     date_str <- if ("Date/Publication" %in% colnames(desc)) {
       desc[1, "Date/Publication"]
-    } else {
+    } else if ("Date" %in% colnames(desc)) {
       desc[1, "Date"]
+    } else {
+      NA_character_
     }
     date_str <- unname(as.character(date_str))
 
@@ -180,8 +205,6 @@ get_first_export_cran <- function(package, function_name,
 
   if (date_only) as.Date(NA) else NULL
 }
-
-
 
 
 #' Find the first commit where a function is exported
