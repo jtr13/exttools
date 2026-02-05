@@ -2,52 +2,88 @@
 % Please edit documentation in R/get_first_commit.R
 \name{get_first_commit}
 \alias{get_first_commit}
-\title{Find the first GitHub commit introducing a symbol}
+\title{Find the first commit that introduces a function definition in a GitHub repo}
 \usage{
 get_first_commit(
   owner,
   repo,
   function_name,
-  date_only = TRUE,
-  path = NULL,
+  date_only = FALSE,
   pattern = NULL,
   branch = NULL,
-  max_commits = Inf
+  max_commits = Inf,
+  cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))
 )
 }
 \arguments{
-\item{owner}{GitHub account name.}
+\item{owner}{Character scalar. GitHub username/organization.}
 
-\item{repo}{GitHub repository name.}
+\item{repo}{Character scalar. GitHub repository name.}
 
-\item{function_name}{Name of the symbol to search for.}
+\item{function_name}{Character scalar. Symbol to search for (e.g. \code{"geom_foo"}).}
 
-\item{date_only}{Logical; if \code{TRUE} (default), return only the commit date.
-If \code{FALSE}, return a one-row data frame with commit metadata.}
+\item{date_only}{Logical; if \code{TRUE}, return only the \code{Date} of the first
+verified defining commit.}
 
-\item{path}{Optional path to an R source file to search. If \code{NULL},
-a suitable file is inferred automatically.}
+\item{pattern}{Optional character regex intended for verification. If \code{NULL},
+defaults to a PCRE pattern approximating an assignment to \code{function_name}.
+Note: this argument is currently not used by the implementation (verification
+is done via \verb{git grep -E} with an internally constructed ERE).}
 
-\item{pattern}{Optional regular expression used to detect the symbol
-assignment. Defaults to matching \verb{<name> <-} or \verb{<name> =}.}
+\item{branch}{Optional character scalar. Ref to check out before searching.
+If \code{NULL}/empty, the function uses \code{origin/HEAD} when available, otherwise \code{HEAD}.}
 
-\item{branch}{Optional branch or ref to search. Defaults to the repository’s
-default branch.}
+\item{max_commits}{Maximum number of candidate commits to verify (in order).
+Use to cap runtime on very large histories. Defaults to \code{Inf} (no cap).}
 
-\item{max_commits}{Maximum number of commits to inspect before giving up.}
+\item{cache_dir}{Directory used to cache cloned repositories. Defaults to
+\code{getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))}.}
 }
 \value{
-If \code{date_only = TRUE}, a character string giving the commit date
-(ISO 8601), or \code{NULL} if no match is found. If \code{date_only = FALSE},
-a one-row data frame with commit metadata, or \code{NULL} if no match is found.
+If a defining commit is found:
+\itemize{
+\item If \code{date_only = TRUE}, a \code{Date}.
+\item Otherwise, a one-row \code{data.frame} with columns:
+\code{date}, \code{author}, \code{message}, \code{url}, \code{file}.
+}
+If not found (or \code{owner}/\code{repo} is \code{NA}), returns \code{NULL}.
 }
 \description{
-Searches a GitHub repository for the earliest commit in which a given
-symbol (typically a function name) is \emph{assigned} in an R source file.
-The search is performed via the GitHub API and does not require a local clone.
+Clones (or refreshes) a GitHub repository into a local cache directory, checks
+out a target ref (branch or default), then scans commits (oldest to newest)
+that \emph{touch} occurrences of \code{function_name} under \verb{R/}. For each candidate
+commit, it verifies the function is actually defined (assigned via \verb{<-} or
+\code{=}) somewhere in the tree at that commit using \verb{git grep}.
 }
 \details{
-If \code{path} is not supplied, GitHub code search is used to identify candidate
-\code{.R} files, and the function selects the first file whose current contents
-actually assign the symbol before scanning its commit history.
+The return value is either the commit date (when \code{date_only = TRUE}) or a
+one-row \code{data.frame} with commit metadata and a GitHub URL.
+
+Candidate commits are obtained with:
+\itemize{
+\item \verb{git log --reverse -S <function_name> <ref> -- R}
+}
+which searches for commits where the literal string \code{function_name} appears in
+diffs under \verb{R/} (additions or removals). Each candidate is then validated by
+searching the repository \emph{tree} at that commit with \verb{git grep} for an
+assignment-like pattern such as \verb{foo <-} or \verb{foo =}.
+
+If the local cached clone is corrupted or fetch fails, the cache directory for
+that repo is deleted and recloned.
+}
+\examples{
+\dontrun{
+# Return full metadata for first defining commit of "geom_ridgeline"
+x <- get_first_commit("wilkelab", "ggridges", "geom_ridgeline")
+
+# Date only
+d <- get_first_commit("tidyverse", "ggplot2", "geom_point", date_only = TRUE)
+
+# Limit verification work
+x2 <- get_first_commit("someorg", "somerepo", "foo", max_commits = 200)
+}
+
+}
+\seealso{
+\code{\link[processx:run]{processx::run}}
 }
