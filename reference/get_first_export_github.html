@@ -47,7 +47,7 @@ export(foo) or export("foo")).'></head><body>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_first_export_github</span><span class="op">(</span></span>
 <span>  <span class="va">owner</span>,</span>
 <span>  <span class="va">repo</span>,</span>
-<span>  <span class="va">function_name</span>,</span>
+<span>  <span class="va">fname</span>,</span>
 <span>  date_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  branch <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cache_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"ggext.git_cache"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"gh_repo_cache"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -67,7 +67,7 @@ export(foo) or export("foo")).'></head><body>
 <dd><p>GitHub repository name (e.g. <code>"ggtree"</code>).</p></dd>
 
 
-<dt id="arg-function-name">function_name<a class="anchor" aria-label="anchor" href="#arg-function-name"></a></dt>
+<dt id="arg-fname">fname<a class="anchor" aria-label="anchor" href="#arg-fname"></a></dt>
 <dd><p>Name of the symbol to search for (e.g. <code>"geom_aline"</code>).</p></dd>
 
 

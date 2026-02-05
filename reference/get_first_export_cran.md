@@ -9,7 +9,7 @@ It intentionally ignores `exportPattern()` to avoid false positives.
 ``` r
 get_first_export_cran(
   package,
-  function_name,
+  fname,
   date_only = FALSE,
   repos = "https://cloud.r-project.org",
   cache_dir = getOption("ggext.cran_cache", file.path(tempdir(), "cran_export_cache"))
@@ -22,7 +22,7 @@ get_first_export_cran(
 
   Character. The name of the CRAN package (e.g. `"ggplot2"`).
 
-- function_name:
+- fname:
 
   Character. The symbol to search for (e.g. `"geom_point"`).
 
@@ -49,6 +49,8 @@ If `date_only = TRUE`, a `Date` object or `NA`.
 Otherwise, a one-row `data.frame` with columns:
 
 - `package`: package name
+
+- `fname`: function name
 
 - `version`: CRAN version where the symbol is first exported
 

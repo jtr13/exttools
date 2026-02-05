@@ -10,7 +10,7 @@ Identifies the earliest Git commit in which a given symbol becomes
 get_first_export_github(
   owner,
   repo,
-  function_name,
+  fname,
   date_only = TRUE,
   branch = NULL,
   cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache")),
@@ -28,7 +28,7 @@ get_first_export_github(
 
   GitHub repository name (e.g. `"ggtree"`).
 
-- function_name:
+- fname:
 
   Name of the symbol to search for (e.g. `"geom_aline"`).
 
