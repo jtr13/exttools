@@ -27,7 +27,7 @@
 #' - `package`: package name
 #' - `fname`: function name
 #' - `version`: CRAN version where the symbol is first exported
-#' - `date`: CRAN publication date (may be `NA` for older releases)
+#' - `first_cran`: CRAN publication date (may be `NA` for older releases)
 #' - `is_reexport`: logical indicating whether the symbol is imported via
 #'   `importFrom()` (i.e., a re-export)
 #'
@@ -43,8 +43,7 @@ get_first_export_cran <- function(package, fname,
                                   )) {
   message("Processing: ", package)
 
-  if (any(is.na(c(package, fname))) ||
-      !nzchar(package) || !nzchar(fname)) {
+  if (any(is.na(c(package, fname))) || !nzchar(package) || !nzchar(fname)) {
     return(if (date_only) as.Date(NA) else NULL)
   }
 
@@ -108,11 +107,18 @@ get_first_export_cran <- function(package, fname,
     # If cache exists, try reading it; if malformed, delete and rebuild.
     if (file.exists(cache_path)) {
       cached <- tryCatch(readRDS(cache_path), error = function(e) NULL)
+
+      # Backward-compat: accept old caches that used `cran_first`
+      if (is.list(cached) && is.null(cached$date) && !is.null(cached$cran_first)) {
+        cached$date <- cached$cran_first
+      }
+
       ok <- is.list(cached) &&
         all(c("version", "date", "ns") %in% names(cached)) &&
         length(cached$version) == 1 &&
         (inherits(cached$date, "Date") || (length(cached$date) == 1 && is.na(cached$date))) &&
         is.character(cached$ns)
+
       if (ok) return(cached)
       unlink(cache_path, force = TRUE)
     }
@@ -198,7 +204,7 @@ get_first_export_cran <- function(package, fname,
         package = package,
         fname = fname,
         version = info$version,
-        date = info$date,
+        first_cran = info$date,
         is_reexport = is_reexport
       ))
     }
@@ -242,7 +248,7 @@ get_first_export_cran <- function(package, fname,
 #'
 #' If `date_only = FALSE`, a one-row `data.frame` with columns:
 #' \describe{
-#'   \item{date}{Commit date}
+#'   \item{first_gh}{Commit date}
 #'   \item{author}{Commit author name}
 #'   \item{message}{Commit message}
 #'   \item{url}{URL of the commit on GitHub}
@@ -381,7 +387,7 @@ get_first_export_github <- function(owner, repo, fname,
   if (isTRUE(date_only)) return(hit$date)
 
   data.frame(
-    date    = hit$date,
+    first_gh = hit$date,
     author  = hit$author,
     message = hit$message,
     url     = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, hit$sha),

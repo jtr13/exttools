@@ -44,7 +44,7 @@ If a defining commit is found:
 \itemize{
 \item If \code{date_only = TRUE}, a \code{Date}.
 \item Otherwise, a one-row \code{data.frame} with columns:
-\code{date}, \code{author}, \code{message}, \code{url}, \code{file}.
+\code{first_commit}, \code{author}, \code{message}, \code{url}, \code{file}.
 }
 If not found (or \code{owner}/\code{repo} is \code{NA}), returns \code{NULL}.
 }

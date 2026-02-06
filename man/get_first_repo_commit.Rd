@@ -4,7 +4,7 @@
 \alias{get_first_repo_commit}
 \title{Find the first commit in a GitHub repository}
 \usage{
-get_first_repo_commit(owner, repo, sha = NULL)
+get_first_repo_commit(owner, repo, sha = NULL, date_only = FALSE)
 }
 \arguments{
 \item{owner}{GitHub repository owner.}
@@ -13,9 +13,11 @@ get_first_repo_commit(owner, repo, sha = NULL)
 
 \item{sha}{Optional commit SHA or branch name to start from. Defaults to the
 repository’s default branch.}
+
+\item{date_only}{Logical. If TRUE, return only the release date as a scalar.}
 }
 \value{
-A one-row data frame with commit SHA, date, author, message, and URL.
+A one-row data frame with commit SHA, first_repo, author, message, and URL.
 }
 \description{
 Finds the earliest (root) commit in a GitHub repository using the GitHub

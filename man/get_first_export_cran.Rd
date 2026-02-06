@@ -35,7 +35,7 @@ Otherwise, a one-row \code{data.frame} with columns:
 \item \code{package}: package name
 \item \code{fname}: function name
 \item \code{version}: CRAN version where the symbol is first exported
-\item \code{date}: CRAN publication date (may be \code{NA} for older releases)
+\item \code{first_cran}: CRAN publication date (may be \code{NA} for older releases)
 \item \code{is_reexport}: logical indicating whether the symbol is imported via
 \code{importFrom()} (i.e., a re-export)
 }

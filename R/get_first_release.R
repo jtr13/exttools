@@ -55,38 +55,33 @@ build_archive_df <- function(cran_archive_db = NULL) {
 #' @param cran_package_db A data frame returned by `tools::CRAN_package_db()`.
 #' @param archive_df A data frame with columns `package` and `archive_date`,
 #'   typically created by [build_archive_df()].
+#' @param date_only Logical. If TRUE, return only the release date as a scalar.
 #'
-#' @return A one-row data frame with columns:
-#' * `package` – package name
-#' * `first_release` – earliest known release date (`Date`) or `NA`
+#' @return
+#' If `date_only = FALSE` (default), a one-row data frame with columns:
+#' * `package`
+#' * `first_release`
 #'
-#' @details
-#' The function performs constant-time lookups using precomputed inputs and is
-#' intended to be called repeatedly over many packages.
-#'
-#' @examples
-#' \dontrun{
-#' cran_db <- tools::CRAN_package_db()
-#' archive_df <- build_archive_df()
-#'
-#' get_first_release("ggplot2", cran_db, archive_df)
-#' }
+#' If `date_only = TRUE`, a single `Date` (or `NA`).
 #'
 #' @export
-get_first_release <- function(pkg, cran_package_db, archive_df) {
+get_first_release <- function(pkg,
+                              cran_package_db = NULL,
+                              archive_df = NULL,
+                              date_only = FALSE) {
+  if (is.null(cran_package_db)) cran_package_db <- tools::CRAN_package_db()
+  if (is.null(archive_df)) archive_df <- build_archive_df()
+
   idx_cran <- match(pkg, cran_package_db$Package)
   idx_arch <- match(pkg, archive_df$package)
 
-  on_cran    <- !is.na(idx_cran)
-  in_archive <- !is.na(idx_arch)
-
-  cran_date <- if (on_cran) {
+  cran_date <- if (!is.na(idx_cran)) {
     as.Date(cran_package_db$Published[idx_cran])
   } else {
     as.Date(NA)
   }
 
-  archive_date <- if (in_archive) {
+  archive_date <- if (!is.na(idx_arch)) {
     archive_df$archive_date[idx_arch]
   } else {
     as.Date(NA)
@@ -94,6 +89,10 @@ get_first_release <- function(pkg, cran_package_db, archive_df) {
 
   first_release <- pmin(cran_date, archive_date, na.rm = TRUE)
   if (is.infinite(first_release)) first_release <- as.Date(NA)
+
+  if (date_only) {
+    return(first_release)
+  }
 
   data.frame(
     package = pkg,

@@ -40,7 +40,7 @@ first explicitly exported, or \code{NULL} if no explicit export is found.
 
 If \code{date_only = FALSE}, a one-row \code{data.frame} with columns:
 \describe{
-\item{date}{Commit date}
+\item{first_gh}{Commit date}
 \item{author}{Commit author name}
 \item{message}{Commit message}
 \item{url}{URL of the commit on GitHub}

@@ -11,9 +11,11 @@
 #' @param repo GitHub repository name.
 #' @param sha Optional commit SHA or branch name to start from. Defaults to the
 #'   repository’s default branch.
+#' @param date_only Logical. If TRUE, return only the release date as a scalar.
+
 #'
 #' @return
-#' A one-row data frame with commit SHA, date, author, message, and URL.
+#' A one-row data frame with commit SHA, first_repo, author, message, and URL.
 #'
 #' @examples
 #' \dontrun{
@@ -23,7 +25,8 @@
 #' @export
 
 
-get_first_repo_commit <- function(owner, repo, sha = NULL) {
+get_first_repo_commit <- function(owner, repo, sha = NULL,
+                                  date_only = FALSE) {
   base <- sprintf("https://api.github.com/repos/%s/%s/commits", owner, repo)
 
   req <- httr2::request(base) |>
@@ -50,8 +53,12 @@ get_first_repo_commit <- function(owner, repo, sha = NULL) {
   date <- cmt$commit$author$date
   if (is.null(date)) date <- cmt$commit$committer$date
 
+  if (date_only) {
+    return(as.Date(date))
+  }
+
   data.frame(
-    date    = as.Date(date),
+    first_repo    = as.Date(date),
     author  = cmt$commit$author$name,
     message = cmt$commit$message,
     url     = cmt$html_url,

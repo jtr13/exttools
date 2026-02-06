@@ -43,7 +43,7 @@
 #' \itemize{
 #'   \item If `date_only = TRUE`, a `Date`.
 #'   \item Otherwise, a one-row `data.frame` with columns:
-#'     `date`, `author`, `message`, `url`, `file`.
+#'     `first_commit`, `author`, `message`, `url`, `file`.
 #' }
 #' If not found (or `owner`/`repo` is `NA`), returns `NULL`.
 #'
@@ -184,7 +184,7 @@ get_first_commit <- function(owner, repo, function_name,
       if (isTRUE(date_only)) return(dt)
 
       return(data.frame(
-        date    = dt,
+        first_commit    = dt,
         author  = au,
         message = msg,
         url     = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, sha),
