@@ -87,7 +87,7 @@ directory.</p></dd>
 <p>Otherwise, a one-row <code>data.frame</code> with columns:</p><ul><li><p><code>package</code>: package name</p></li>
 <li><p><code>fname</code>: function name</p></li>
 <li><p><code>version</code>: CRAN version where the symbol is first exported</p></li>
-<li><p><code>date</code>: CRAN publication date (may be <code>NA</code> for older releases)</p></li>
+<li><p><code>first_cran</code>: CRAN publication date (may be <code>NA</code> for older releases)</p></li>
 <li><p><code>is_reexport</code>: logical indicating whether the symbol is imported via
 <code>importFrom()</code> (i.e., a re-export)</p></li>
 </ul><p>Returns <code>NULL</code> if the symbol is never exported.</p>

@@ -54,7 +54,7 @@ Otherwise, a one-row `data.frame` with columns:
 
 - `version`: CRAN version where the symbol is first exported
 
-- `date`: CRAN publication date (may be `NA` for older releases)
+- `first_cran`: CRAN publication date (may be `NA` for older releases)
 
 - `is_reexport`: logical indicating whether the symbol is imported via
   `importFrom()` (i.e., a re-export)

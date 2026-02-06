@@ -41,7 +41,7 @@ REST API. Does not require a local clone.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_first_repo_commit</span><span class="op">(</span><span class="va">owner</span>, <span class="va">repo</span>, sha <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_first_repo_commit</span><span class="op">(</span><span class="va">owner</span>, <span class="va">repo</span>, sha <span class="op">=</span> <span class="cn">NULL</span>, date_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,10 +60,14 @@ REST API. Does not require a local clone.</p>
 <dd><p>Optional commit SHA or branch name to start from. Defaults to the
 repository’s default branch.</p></dd>
 
+
+<dt id="arg-date-only">date_only<a class="anchor" aria-label="anchor" href="#arg-date-only"></a></dt>
+<dd><p>Logical. If TRUE, return only the release date as a scalar.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A one-row data frame with commit SHA, date, author, message, and URL.</p>
+    <p>A one-row data frame with commit SHA, first_repo, author, message, and URL.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

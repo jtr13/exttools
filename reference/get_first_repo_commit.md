@@ -6,7 +6,7 @@ REST API. Does not require a local clone.
 ## Usage
 
 ``` r
-get_first_repo_commit(owner, repo, sha = NULL)
+get_first_repo_commit(owner, repo, sha = NULL, date_only = FALSE)
 ```
 
 ## Arguments
@@ -24,9 +24,14 @@ get_first_repo_commit(owner, repo, sha = NULL)
   Optional commit SHA or branch name to start from. Defaults to the
   repository’s default branch.
 
+- date_only:
+
+  Logical. If TRUE, return only the release date as a scalar.
+
 ## Value
 
-A one-row data frame with commit SHA, date, author, message, and URL.
+A one-row data frame with commit SHA, first_repo, author, message, and
+URL.
 
 ## Details
 

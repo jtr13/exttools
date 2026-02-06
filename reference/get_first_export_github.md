@@ -60,7 +60,7 @@ was first explicitly exported, or `NULL` if no explicit export is found.
 
 If `date_only = FALSE`, a one-row `data.frame` with columns:
 
-- date:
+- first_gh:
 
   Commit date
 

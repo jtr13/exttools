@@ -7,7 +7,12 @@ date.
 ## Usage
 
 ``` r
-get_first_release(pkg, cran_package_db, archive_df)
+get_first_release(
+  pkg,
+  cran_package_db = NULL,
+  archive_df = NULL,
+  date_only = FALSE
+)
 ```
 
 ## Arguments
@@ -27,26 +32,16 @@ get_first_release(pkg, cran_package_db, archive_df)
   created by
   [`build_archive_df()`](https://jtr13.github.io/exttools/reference/build_archive_df.md).
 
+- date_only:
+
+  Logical. If TRUE, return only the release date as a scalar.
+
 ## Value
 
-A one-row data frame with columns:
+If `date_only = FALSE` (default), a one-row data frame with columns:
 
-- `package` – package name
+- `package`
 
-- `first_release` – earliest known release date (`Date`) or `NA`
+- `first_release`
 
-## Details
-
-The function performs constant-time lookups using precomputed inputs and
-is intended to be called repeatedly over many packages.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-cran_db <- tools::CRAN_package_db()
-archive_df <- build_archive_df()
-
-get_first_release("ggplot2", cran_db, archive_df)
-} # }
-```
+If `date_only = TRUE`, a single `Date` (or `NA`).

@@ -10,6 +10,8 @@
   : Extract ggplot2-extension components from a CRAN package
 - [`get_components_github()`](https://jtr13.github.io/exttools/reference/get_components_github.md)
   : Extract ggplot2 grammar components from a GitHub repository
+- [`get_first_all()`](https://jtr13.github.io/exttools/reference/get_first_all.md)
+  : Get “first seen” dates for a symbol across GitHub + CRAN
 - [`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md)
   : Find the first commit that introduces a function definition in a
   GitHub repo

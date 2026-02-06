@@ -71,8 +71,8 @@ If a defining commit is found:
 
 - If `date_only = TRUE`, a `Date`.
 
-- Otherwise, a one-row `data.frame` with columns: `date`, `author`,
-  `message`, `url`, `file`.
+- Otherwise, a one-row `data.frame` with columns: `first_commit`,
+  `author`, `message`, `url`, `file`.
 
 If not found (or `owner`/`repo` is `NA`), returns `NULL`.
 
