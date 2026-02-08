@@ -11,7 +11,7 @@ get_first_export_github(
   owner,
   repo,
   fname,
-  date_only = TRUE,
+  date_only = FALSE,
   branch = NULL,
   cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache")),
   file = "NAMESPACE"
@@ -34,8 +34,7 @@ get_first_export_github(
 
 - date_only:
 
-  Logical; if `TRUE` (default), return only the commit date. If `FALSE`,
-  return a one-row data frame with commit metadata.
+  Logical; if `TRUE`, return only the commit date. Defaults to `FALSE`.
 
 - branch:
 
@@ -56,29 +55,37 @@ get_first_export_github(
 ## Value
 
 If `date_only = TRUE`, a `Date` giving the commit date when the symbol
-was first explicitly exported, or `NULL` if no explicit export is found.
+was first explicitly exported, or `NA`.
 
 If `date_only = FALSE`, a one-row `data.frame` with columns:
 
+- package:
+
+  Repository name (assumed package name).
+
+- fname:
+
+  Symbol searched.
+
 - first_gh:
 
-  Commit date
+  Commit date.
 
 - author:
 
-  Commit author name
+  Commit author name.
 
 - message:
 
-  Commit message
+  Commit message.
 
 - url:
 
-  URL of the commit on GitHub
+  URL of the commit on GitHub.
 
 - file:
 
-  File searched (usually `NAMESPACE`)
+  File searched (usually `NAMESPACE`).
 
 ## Details
 
@@ -89,10 +96,12 @@ the GitHub API, avoiding rate-limit issues.
 
 This function detects **explicit exports only**. It does not interpret
 `exportPattern()` semantics; packages that rely solely on pattern-based
-exports may return `NULL`.
+exports return `NULL` (or `NA` when `date_only = TRUE`).
 
 Prints a progress message via
-[`message()`](https://rdrr.io/r/base/message.html).
+[`message()`](https://rdrr.io/r/base/message.html). On failure or no
+hit, prints a diagnostic message indicating the reason (e.g., repository
+not found, checkout failed, symbol not exported).
 
 The initial call for a given repository may be slow due to cloning.
 Subsequent calls are fast as long as the cached clone is reused.
@@ -110,6 +119,6 @@ get_first_commit
 ``` r
 if (FALSE) { # \dontrun{
 get_first_export_github("YuLab-SMU", "ggtree", "geom_aline")
-get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = FALSE)
+get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = TRUE)
 } # }
 ```
