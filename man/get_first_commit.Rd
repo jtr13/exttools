@@ -23,7 +23,7 @@ get_first_commit(
 \item{function_name}{Character scalar. Symbol to search for (e.g. \code{"geom_foo"}).}
 
 \item{date_only}{Logical; if \code{TRUE}, return only the \code{Date} of the first
-verified defining commit.}
+verified defining commit. Defaults to \code{FALSE}.}
 
 \item{pattern}{Optional character regex intended for verification. If \code{NULL},
 defaults to a PCRE pattern approximating an assignment to \code{function_name}.
@@ -44,9 +44,10 @@ If a defining commit is found:
 \itemize{
 \item If \code{date_only = TRUE}, a \code{Date}.
 \item Otherwise, a one-row \code{data.frame} with columns:
-\code{first_commit}, \code{author}, \code{message}, \code{url}, \code{file}.
+\code{package}, \code{fname}, \code{first_commit}, \code{author}, \code{message}, \code{url}, \code{file}.
 }
-If not found (or \code{owner}/\code{repo} is \code{NA}), returns \code{NULL}.
+If not found (or if the repo cannot be searched), returns \code{NA} when
+\code{date_only = TRUE}, otherwise \code{NULL}.
 }
 \description{
 Clones (or refreshes) a GitHub repository into a local cache directory, checks
@@ -59,6 +60,10 @@ commit, it verifies the function is actually defined (assigned via \verb{<-} or
 The return value is either the commit date (when \code{date_only = TRUE}) or a
 one-row \code{data.frame} with commit metadata and a GitHub URL.
 
+This function emits diagnostic \code{message()} output when it cannot determine an
+answer (e.g., repository not found/inaccessible, checkout failed, git log/grep
+errors) or when the symbol is never defined under \verb{R/}.
+
 Candidate commits are obtained with:
 \itemize{
 \item \verb{git log --reverse -S <function_name> <ref> -- R}
@@ -70,6 +75,11 @@ assignment-like pattern such as \verb{foo <-} or \verb{foo =}.
 
 If the local cached clone is corrupted or fetch fails, the cache directory for
 that repo is deleted and recloned.
+
+For best performance across sessions, set a persistent cache location:
+\preformatted{
+options(ggext.git_cache = "~/Library/Caches/ggext_git")
+}
 }
 \examples{
 \dontrun{
