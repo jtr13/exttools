@@ -8,7 +8,7 @@ get_first_export_github(
   owner,
   repo,
   fname,
-  date_only = TRUE,
+  date_only = FALSE,
   branch = NULL,
   cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache")),
   file = "NAMESPACE"
@@ -21,8 +21,8 @@ get_first_export_github(
 
 \item{fname}{Name of the symbol to search for (e.g. \code{"geom_aline"}).}
 
-\item{date_only}{Logical; if \code{TRUE} (default), return only the commit date.
-If \code{FALSE}, return a one-row data frame with commit metadata.}
+\item{date_only}{Logical; if \code{TRUE}, return only the commit date.
+Defaults to \code{FALSE}.}
 
 \item{branch}{Optional branch or ref to search. Defaults to the repository’s
 default branch.}
@@ -36,15 +36,17 @@ Defaults to \code{"NAMESPACE"}.}
 }
 \value{
 If \code{date_only = TRUE}, a \code{Date} giving the commit date when the symbol was
-first explicitly exported, or \code{NULL} if no explicit export is found.
+first explicitly exported, or \code{NA}.
 
 If \code{date_only = FALSE}, a one-row \code{data.frame} with columns:
 \describe{
-\item{first_gh}{Commit date}
-\item{author}{Commit author name}
-\item{message}{Commit message}
-\item{url}{URL of the commit on GitHub}
-\item{file}{File searched (usually \code{NAMESPACE})}
+\item{package}{Repository name (assumed package name).}
+\item{fname}{Symbol searched.}
+\item{first_gh}{Commit date.}
+\item{author}{Commit author name.}
+\item{message}{Commit message.}
+\item{url}{URL of the commit on GitHub.}
+\item{file}{File searched (usually \code{NAMESPACE}).}
 }
 }
 \description{
@@ -60,9 +62,11 @@ GitHub API, avoiding rate-limit issues.
 
 This function detects \strong{explicit exports only}. It does not interpret
 \code{exportPattern()} semantics; packages that rely solely on pattern-based
-exports may return \code{NULL}.
+exports return \code{NULL} (or \code{NA} when \code{date_only = TRUE}).
 
-Prints a progress message via \code{message()}.
+Prints a progress message via \code{message()}. On failure or no hit, prints a
+diagnostic message indicating the reason (e.g., repository not found,
+checkout failed, symbol not exported).
 
 The initial call for a given repository may be slow due to cloning.
 Subsequent calls are fast as long as the cached clone is reused.
@@ -75,7 +79,7 @@ options(ggext.git_cache = "~/Library/Caches/ggext_git")
 \examples{
 \dontrun{
 get_first_export_github("YuLab-SMU", "ggtree", "geom_aline")
-get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = FALSE)
+get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = TRUE)
 }
 
 }

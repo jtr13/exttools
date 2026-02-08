@@ -227,13 +227,13 @@ get_first_export_cran <- function(package, fname,
 #'
 #' This function detects **explicit exports only**. It does not interpret
 #' `exportPattern()` semantics; packages that rely solely on pattern-based
-#' exports may return `NULL`.
+#' exports return `NULL` (or `NA` when `date_only = TRUE`).
 #'
 #' @param owner GitHub account name (e.g. `"YuLab-SMU"`).
 #' @param repo GitHub repository name (e.g. `"ggtree"`).
 #' @param fname Name of the symbol to search for (e.g. `"geom_aline"`).
-#' @param date_only Logical; if `TRUE` (default), return only the commit date.
-#'   If `FALSE`, return a one-row data frame with commit metadata.
+#' @param date_only Logical; if `TRUE`, return only the commit date.
+#'   Defaults to `FALSE`.
 #' @param branch Optional branch or ref to search. Defaults to the repository’s
 #'   default branch.
 #' @param cache_dir Directory used to cache cloned repositories. If not
@@ -244,19 +244,23 @@ get_first_export_cran <- function(package, fname,
 #'
 #' @return
 #' If `date_only = TRUE`, a `Date` giving the commit date when the symbol was
-#' first explicitly exported, or `NULL` if no explicit export is found.
+#' first explicitly exported, or `NA`.
 #'
 #' If `date_only = FALSE`, a one-row `data.frame` with columns:
 #' \describe{
-#'   \item{first_gh}{Commit date}
-#'   \item{author}{Commit author name}
-#'   \item{message}{Commit message}
-#'   \item{url}{URL of the commit on GitHub}
-#'   \item{file}{File searched (usually `NAMESPACE`)}
+#'   \item{package}{Repository name (assumed package name).}
+#'   \item{fname}{Symbol searched.}
+#'   \item{first_gh}{Commit date.}
+#'   \item{author}{Commit author name.}
+#'   \item{message}{Commit message.}
+#'   \item{url}{URL of the commit on GitHub.}
+#'   \item{file}{File searched (usually `NAMESPACE`).}
 #' }
 #'
 #' @details
-#' Prints a progress message via `message()`.
+#' Prints a progress message via `message()`. On failure or no hit, prints a
+#' diagnostic message indicating the reason (e.g., repository not found,
+#' checkout failed, symbol not exported).
 #'
 #' The initial call for a given repository may be slow due to cloning.
 #' Subsequent calls are fast as long as the cached clone is reused.
@@ -271,22 +275,24 @@ get_first_export_cran <- function(package, fname,
 #' @examples
 #' \dontrun{
 #' get_first_export_github("YuLab-SMU", "ggtree", "geom_aline")
-#' get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = FALSE)
+#' get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = TRUE)
 #' }
 #'
 #' @export
 get_first_export_github <- function(owner, repo, fname,
-                                    date_only = TRUE,
+                                    date_only = FALSE,
                                     branch = NULL,
                                     cache_dir = getOption(
                                       "ggext.git_cache",
                                       file.path(tempdir(), "gh_repo_cache")
                                     ),
                                     file = "NAMESPACE") {
-  message("Processing:", owner, repo, fname)
+  message("Processing: ", owner, " ", repo, " ", fname)
 
-  if (is.na(owner) || is.na(repo)) {
-    return(NULL)
+  if (any(is.na(c(owner, repo, fname))) || !nzchar(owner) || !nzchar(repo) || !nzchar(fname)) {
+    msg <- "invalid inputs (owner/repo/fname missing or empty)"
+    message("get_first_export_github(): ", msg, " [", owner, "/", repo, " :: ", fname, "]")
+    return(if (date_only) as.Date(NA) else NULL)
   }
 
   if (!requireNamespace("processx", quietly = TRUE)) {
@@ -309,19 +315,40 @@ get_first_export_github <- function(owner, repo, fname,
     )
   }
 
+  fail <- function(reason, details = NULL) {
+    msg <- paste0(
+      "get_first_export_github(): ",
+      reason,
+      " [", owner, "/", repo, " :: ", fname, "]",
+      if (!is.null(details) && nzchar(details)) paste0("\n", details) else ""
+    )
+    message(msg)
+    if (date_only) as.Date(NA) else NULL
+  }
+
   # Clone or refresh (reclone on fetch failure)
   if (!dir.exists(file.path(repo_dir, ".git"))) {
     if (dir.exists(repo_dir)) unlink(repo_dir, recursive = TRUE, force = TRUE)
     dir.create(repo_dir, recursive = TRUE)
     res <- run_git(c("clone", remote, repo_dir))
-    if (res$status != 0L) stop(paste(c(res$stdout, res$stderr), collapse = "\n"))
+    if (res$status != 0L) {
+      return(fail(
+        "repository not found or inaccessible (clone failed)",
+        paste(c(res$stdout, res$stderr), collapse = "\n")
+      ))
+    }
   } else {
     res <- run_git(c("-C", repo_dir, "fetch", "--all", "--prune"))
     if (res$status != 0L) {
       unlink(repo_dir, recursive = TRUE, force = TRUE)
       dir.create(repo_dir, recursive = TRUE)
       res2 <- run_git(c("clone", remote, repo_dir))
-      if (res2$status != 0L) stop(paste(c(res2$stdout, res2$stderr), collapse = "\n"))
+      if (res2$status != 0L) {
+        return(fail(
+          "failed to fetch cached repo and reclone failed",
+          paste(c(res$stdout, res$stderr, res2$stdout, res2$stderr), collapse = "\n")
+        ))
+      }
     }
   }
 
@@ -337,7 +364,13 @@ get_first_export_github <- function(owner, repo, fname,
   }
 
   # Checkout quietly
-  run_git(c("-C", repo_dir, "checkout", "-q", ref))
+  res <- run_git(c("-C", repo_dir, "checkout", "-q", ref))
+  if (res$status != 0L) {
+    return(fail(
+      sprintf("failed to checkout ref '%s'", ref),
+      paste(c(res$stdout, res$stderr), collapse = "\n")
+    ))
+  }
 
   fmt <- "%H%x09%ad%x09%an%x09%s"
 
@@ -363,6 +396,8 @@ get_first_export_github <- function(owner, repo, fname,
       "-S", needle,
       "--", file
     ))
+
+    # If git returns nonzero, treat as "could not determine" for this needle.
     if (res$status != 0L) return(NULL)
 
     lines <- parse_git_log(res$stdout)
@@ -373,27 +408,41 @@ get_first_export_github <- function(owner, repo, fname,
 
     list(
       sha = parts[1],
-      date = as.Date(parts[2]),
+      date = suppressWarnings(as.Date(parts[2])),
       author = parts[3],
       message = parts[4]
     )
   }
 
-  hits <- Filter(Negate(is.null), lapply(needles, search_one))
-  if (!length(hits)) return(NULL)
+  hits <- lapply(needles, search_one)
+  hits <- Filter(is.list, hits)
+  if (!length(hits)) {
+    # Optional extra check: does the file exist at all at the searched ref?
+    chk <- run_git(c("-C", repo_dir, "ls-tree", "-r", "--name-only", ref, "--", file))
+    if (chk$status != 0L) {
+      return(fail(
+        sprintf("could not determine (git ls-tree failed for file '%s')", file),
+        paste(c(chk$stdout, chk$stderr), collapse = "\n")
+      ))
+    }
+    if (!nzchar(chk$stdout)) {
+      return(fail(sprintf("file '%s' not found in repo at ref '%s'", file, ref)))
+    }
+
+    return(fail("symbol never explicitly exported (no matching export() in file history)"))
+  }
 
   hit <- hits[[which.min(vapply(hits, function(x) as.numeric(x$date), numeric(1)))]]
 
-  if (isTRUE(date_only)) return(hit$date)
+  if (date_only) return(hit$date)
 
   data.frame(
+    package  = repo,
+    fname    = fname,
     first_gh = hit$date,
-    author  = hit$author,
-    message = hit$message,
-    url     = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, hit$sha),
-    file    = file,
-    stringsAsFactors = FALSE
+    author   = hit$author,
+    message  = hit$message,
+    url      = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, hit$sha),
+    file     = file
   )
 }
-
-
