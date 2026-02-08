@@ -80,7 +80,7 @@ commit, it verifies the function is actually defined (assigned via <code>&lt;-</
 
 <dt id="arg-date-only">date_only<a class="anchor" aria-label="anchor" href="#arg-date-only"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, return only the <code>Date</code> of the first
-verified defining commit.</p></dd>
+verified defining commit. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-pattern">pattern<a class="anchor" aria-label="anchor" href="#arg-pattern"></a></dt>
@@ -109,13 +109,17 @@ Use to cap runtime on very large histories. Defaults to <code>Inf</code> (no cap
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>If a defining commit is found:</p><ul><li><p>If <code>date_only = TRUE</code>, a <code>Date</code>.</p></li>
 <li><p>Otherwise, a one-row <code>data.frame</code> with columns:
-<code>first_commit</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
-</ul><p>If not found (or <code>owner</code>/<code>repo</code> is <code>NA</code>), returns <code>NULL</code>.</p>
+<code>package</code>, <code>fname</code>, <code>first_commit</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
+</ul><p>If not found (or if the repo cannot be searched), returns <code>NA</code> when
+<code>date_only = TRUE</code>, otherwise <code>NULL</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The return value is either the commit date (when <code>date_only = TRUE</code>) or a
 one-row <code>data.frame</code> with commit metadata and a GitHub URL.</p>
+<p>This function emits diagnostic <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> output when it cannot determine an
+answer (e.g., repository not found/inaccessible, checkout failed, git log/grep
+errors) or when the symbol is never defined under <code>R/</code>.</p>
 <p>Candidate commits are obtained with:</p><ul><li><p><code>git log --reverse -S &lt;function_name&gt; &lt;ref&gt; -- R</code></p></li>
 </ul><p>which searches for commits where the literal string <code>function_name</code> appears in
 diffs under <code>R/</code> (additions or removals). Each candidate is then validated by
@@ -123,6 +127,9 @@ searching the repository <em>tree</em> at that commit with <code>git grep</code>
 assignment-like pattern such as <code>foo &lt;-</code> or <code>foo =</code>.</p>
 <p>If the local cached clone is corrupted or fetch fails, the cache directory for
 that repo is deleted and recloned.</p>
+<p>For best performance across sessions, set a persistent cache location:</p><div class="sourceCode"><pre><code><span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggext.git_cache <span class="op">=</span> <span class="st">"~/Library/Caches/ggext_git"</span><span class="op">)</span></span></code></pre></div>
+
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

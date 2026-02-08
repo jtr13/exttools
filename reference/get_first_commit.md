@@ -39,7 +39,7 @@ get_first_commit(
 - date_only:
 
   Logical; if `TRUE`, return only the `Date` of the first verified
-  defining commit.
+  defining commit. Defaults to `FALSE`.
 
 - pattern:
 
@@ -71,15 +71,22 @@ If a defining commit is found:
 
 - If `date_only = TRUE`, a `Date`.
 
-- Otherwise, a one-row `data.frame` with columns: `first_commit`,
-  `author`, `message`, `url`, `file`.
+- Otherwise, a one-row `data.frame` with columns: `package`, `fname`,
+  `first_commit`, `author`, `message`, `url`, `file`.
 
-If not found (or `owner`/`repo` is `NA`), returns `NULL`.
+If not found (or if the repo cannot be searched), returns `NA` when
+`date_only = TRUE`, otherwise `NULL`.
 
 ## Details
 
 The return value is either the commit date (when `date_only = TRUE`) or
 a one-row `data.frame` with commit metadata and a GitHub URL.
+
+This function emits diagnostic
+[`message()`](https://rdrr.io/r/base/message.html) output when it cannot
+determine an answer (e.g., repository not found/inaccessible, checkout
+failed, git log/grep errors) or when the symbol is never defined under
+`R/`.
 
 Candidate commits are obtained with:
 
@@ -92,6 +99,10 @@ then validated by searching the repository *tree* at that commit with
 
 If the local cached clone is corrupted or fetch fails, the cache
 directory for that repo is deleted and recloned.
+
+For best performance across sessions, set a persistent cache location:
+
+    options(ggext.git_cache = "~/Library/Caches/ggext_git")
 
 ## See also
 
