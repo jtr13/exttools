@@ -1,76 +1,90 @@
-# Find the first commit in a GitHub repository
+# Find the first (root) commit in a GitHub repository
 
-Finds the earliest (root) commit in a GitHub repository using the GitHub
-REST API. The function does not require a local clone and queries GitHub
-directly via the commits endpoint.
+Clones (or refreshes) a GitHub repository into a shared local cache and
+determines the earliest (root) commit using `git` history, without
+relying on the GitHub REST API.
 
 ## Usage
 
 ``` r
-get_first_repo_commit(owner, repo, sha = NULL, date_only = FALSE)
+get_first_repo_commit(
+  owner,
+  repo,
+  branch = NULL,
+  date_only = FALSE,
+  cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))
+)
 ```
 
 ## Arguments
 
 - owner:
 
-  Character. GitHub repository owner.
+  Character scalar. GitHub username or organization.
 
 - repo:
 
-  Character. GitHub repository name.
+  Character scalar. GitHub repository name.
 
-- sha:
+- branch:
 
-  Optional character. Commit SHA or branch name to start from. Defaults
-  to the repository's default branch.
+  Optional character scalar. Git ref to use (e.g. `"main"`). If `NULL`
+  or empty, the function uses `origin/HEAD` when available, otherwise
+  `HEAD`.
 
 - date_only:
 
-  Logical. If TRUE, return only the commit date as a Date scalar.
+  Logical. If `TRUE`, return only the `Date` of the first commit.
+  Defaults to `FALSE`.
+
+- cache_dir:
+
+  Directory used to cache cloned repositories. Defaults to
+  `getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))`.
 
 ## Value
 
-When date_only = TRUE, a Date scalar giving the date of the first
-commit, or NA if the repository is not found.
+If a root commit is found:
 
-When date_only = FALSE, a one-row data frame with columns:
+- When `date_only = TRUE`, a `Date`.
 
-- first_repo:
+- Otherwise, a one-row `data.frame` with columns: `first_repo`,
+  `author`, `message`, and `url`.
 
-  Date of the first commit
+If the repository cannot be accessed or inspected:
 
-- author:
+- Returns `NA` when `date_only = TRUE`
 
-  Commit author name
-
-- message:
-
-  Commit message
-
-- url:
-
-  URL of the commit on GitHub
-
-or NULL if the repository is not found.
+- Returns `NULL` otherwise
 
 ## Details
 
-Pagination is handled implicitly: the function follows the Link header
-to retrieve the final page of commits and returns the oldest commit
-listed.
+This function uses the same on-disk Git repository cache as related
+helpers:
 
-If the repository does not exist, is inaccessible, or the request fails:
+- [`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md)
 
-- Returns NA when date_only = TRUE
+- `get_first_export()`
 
-- Returns NULL otherwise
+- [`get_first_call_github()`](https://jtr13.github.io/exttools/reference/get_first_call_github.md)
+
+The cache location is controlled by the `ggext.git_cache` option.
+Repositories cloned or refreshed by any of these functions are reused
+across calls, avoiding redundant network access.
+
+## See also
+
+[`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md),
+`get_first_export()`,
+[`get_first_call_github()`](https://jtr13.github.io/exttools/reference/get_first_call_github.md)
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-get_first_repo_commit("tidyverse", "ggplot2")
+get_first_repo_commit("YuLab-SMU", "ggtree")
 get_first_repo_commit("tidyverse", "ggplot2", date_only = TRUE)
+
+options(ggext.git_cache = "~/Library/Caches/ggext_git")
 } # }
 ```
