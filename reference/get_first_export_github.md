@@ -1,8 +1,10 @@
-# Find the first commit where a function is exported
+# Find the first commit where a symbol is explicitly exported on GitHub
 
 Identifies the earliest Git commit in which a given symbol becomes
-*explicitly exported* in a package’s `NAMESPACE` file (e.g. via
-`export(foo)` or `export("foo")`).
+**explicitly exported** in a repository file (by default, the package
+`NAMESPACE`). The function clones the repository locally (once) into a
+cache directory and then searches *local* Git history for export
+directives.
 
 ## Usage
 
@@ -22,103 +24,82 @@ get_first_export_github(
 
 - owner:
 
-  GitHub account name (e.g. `"YuLab-SMU"`).
+  Character. GitHub account name (e.g. `"tidyverse"`).
 
 - repo:
 
-  GitHub repository name (e.g. `"ggtree"`).
+  Character. GitHub repository name (e.g. `"ggplot2"`).
 
 - fname:
 
-  Name of the symbol to search for (e.g. `"geom_aline"`).
+  Character. Symbol/function name to search for (e.g. `"geom_point"`).
 
 - date_only:
 
-  Logical; if `TRUE`, return only the commit date. Defaults to `FALSE`.
+  Logical. If `TRUE`, return only the commit date as a `Date`. If
+  `FALSE` (default), return a one-row `data.frame` with commit metadata.
 
 - branch:
 
-  Optional branch or ref to search. Defaults to the repository’s default
-  branch.
+  Character. Optional ref to check out before searching (branch, tag, or
+  commit-ish). If `NULL`, uses `origin/HEAD` when available; otherwise
+  uses `HEAD`.
 
 - cache_dir:
 
-  Directory used to cache cloned repositories. If not supplied
-  explicitly, the function uses the value of the `ggext.git_cache`
-  option, falling back to a temporary directory.
+  Character. Directory used to cache cloned repositories. Defaults to
+  `getOption("ggext.git_cache", file.path(tempdir(),"gh_repo_cache"))`.
 
 - file:
 
-  Path to the NAMESPACE file within the repository. Defaults to
+  Character. Path (within the repo) to the file to search. Defaults to
   `"NAMESPACE"`.
 
 ## Value
 
-If `date_only = TRUE`, a `Date` giving the commit date when the symbol
-was first explicitly exported, or `NA`.
-
-If `date_only = FALSE`, a one-row `data.frame` with columns:
-
-- package:
-
-  Repository name (assumed package name).
-
-- fname:
-
-  Symbol searched.
-
-- first_gh:
-
-  Commit date.
-
-- author:
-
-  Commit author name.
-
-- message:
-
-  Commit message.
-
-- url:
-
-  URL of the commit on GitHub.
-
-- file:
-
-  File searched (usually `NAMESPACE`).
+If `date_only = TRUE`, a `Date` (or `as.Date(NA)` on failure). Otherwise
+a one-row `data.frame` with columns: `package`, `fname`, `first_gh`,
+`author`, `message`, `url`, `file`; or `NULL` on failure.
 
 ## Details
 
-The function works by cloning the package repository locally (once, into
-a cache directory) and searching the Git history of the `NAMESPACE`
-file. After the initial clone, all operations are local and do not use
-the GitHub API, avoiding rate-limit issues.
+After the initial clone, all operations are local and do **not** use the
+GitHub API. This avoids rate limits and allows the function to work
+without Wi-Fi **as long as the repository has already been cloned into
+the cache**.
 
-This function detects **explicit exports only**. It does not interpret
-`exportPattern()` semantics; packages that rely solely on pattern-based
-exports return `NULL` (or `NA` when `date_only = TRUE`).
+The search looks for these explicit forms:
 
-Prints a progress message via
-[`message()`](https://rdrr.io/r/base/message.html). On failure or no
-hit, prints a diagnostic message indicating the reason (e.g., repository
-not found, checkout failed, symbol not exported).
+- `export(fname)`
 
-The initial call for a given repository may be slow due to cloning.
-Subsequent calls are fast as long as the cached clone is reused.
+- `export("fname")`
 
-For best performance across sessions, set a persistent cache location:
+- `export('fname')`
 
-    options(ggext.git_cache = "~/Library/Caches/ggext_git")
+Notes:
 
-## See also
+- This detects **explicit exports only**. It does not interpret
+  `exportPattern()` semantics.
 
-get_first_commit
+- The history search uses `git log -S` on the target file (default:
+  `NAMESPACE`); if the file never existed at the chosen ref, the
+  function returns `NULL` (or `as.Date(NA)` with `date_only = TRUE`).
+
+- No fetch/pull is performed. If the remote repository updates, you must
+  delete the cached clone to refresh it.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-get_first_export_github("YuLab-SMU", "ggtree", "geom_aline")
-get_first_export_github("YuLab-SMU", "ggtree", "geom_aline", date_only = TRUE)
+# Earliest explicit export date (requires git; clones once, then local)
+get_first_export_github("tidyverse", "ggplot2", "geom_point", date_only = TRUE)
+
+# Full commit metadata
+get_first_export_github("tidyverse", "ggplot2", "geom_point")
+
+# Search a different ref or file
+get_first_export_github("tidyverse", "ggplot2", "geom_point", branch = "main")
+get_first_export_github("someowner", "somerepo", "foo", file = "path/to/NAMESPACE")
 } # }
 ```

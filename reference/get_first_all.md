@@ -9,7 +9,7 @@ Computes a small one-row summary of earliest known dates across:
   logic),
 
 - first GitHub release/export date for `fname` (per
-  `get_first_export_github()`),
+  [`get_first_export_github()`](https://jtr13.github.io/exttools/reference/get_first_export_github.md)),
 
 - first CRAN release date for the package (via
   [`get_first_release()`](https://jtr13.github.io/exttools/reference/get_first_release.md)),
@@ -67,7 +67,8 @@ A one-row `data.frame` with columns:
 - first_gh:
 
   Earliest GitHub export/release date for `fname` per
-  `get_first_export_github()` (`Date` or `NA`).
+  [`get_first_export_github()`](https://jtr13.github.io/exttools/reference/get_first_export_github.md)
+  (`Date` or `NA`).
 
 - first_release:
 
