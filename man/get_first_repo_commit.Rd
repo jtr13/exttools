@@ -2,53 +2,71 @@
 % Please edit documentation in R/get_first_repo_commit.R
 \name{get_first_repo_commit}
 \alias{get_first_repo_commit}
-\title{Find the first commit in a GitHub repository}
+\title{Find the first (root) commit in a GitHub repository}
 \usage{
-get_first_repo_commit(owner, repo, sha = NULL, date_only = FALSE)
+get_first_repo_commit(
+  owner,
+  repo,
+  branch = NULL,
+  date_only = FALSE,
+  cache_dir = getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))
+)
 }
 \arguments{
-\item{owner}{Character. GitHub repository owner.}
+\item{owner}{Character scalar. GitHub username or organization.}
 
-\item{repo}{Character. GitHub repository name.}
+\item{repo}{Character scalar. GitHub repository name.}
 
-\item{sha}{Optional character. Commit SHA or branch name to start from.
-Defaults to the repository's default branch.}
+\item{branch}{Optional character scalar. Git ref to use (e.g. \code{"main"}).
+If \code{NULL} or empty, the function uses \code{origin/HEAD} when available,
+otherwise \code{HEAD}.}
 
-\item{date_only}{Logical. If TRUE, return only the commit date
-as a Date scalar.}
+\item{date_only}{Logical. If \code{TRUE}, return only the \code{Date} of the first commit.
+Defaults to \code{FALSE}.}
+
+\item{cache_dir}{Directory used to cache cloned repositories. Defaults to
+\code{getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))}.}
 }
 \value{
-When date_only = TRUE, a Date scalar giving the date of the first commit,
-or NA if the repository is not found.
-
-When date_only = FALSE, a one-row data frame with columns:
-\describe{
-\item{first_repo}{Date of the first commit}
-\item{author}{Commit author name}
-\item{message}{Commit message}
-\item{url}{URL of the commit on GitHub}
+If a root commit is found:
+\itemize{
+\item When \code{date_only = TRUE}, a \code{Date}.
+\item Otherwise, a one-row \code{data.frame} with columns:
+\code{first_repo}, \code{author}, \code{message}, and \code{url}.
 }
-or NULL if the repository is not found.
+
+If the repository cannot be accessed or inspected:
+\itemize{
+\item Returns \code{NA} when \code{date_only = TRUE}
+\item Returns \code{NULL} otherwise
+}
 }
 \description{
-Finds the earliest (root) commit in a GitHub repository using the GitHub
-REST API. The function does not require a local clone and queries GitHub
-directly via the commits endpoint.
+Clones (or refreshes) a GitHub repository into a shared local cache and
+determines the earliest (root) commit using \code{git} history, without relying
+on the GitHub REST API.
 }
 \details{
-Pagination is handled implicitly: the function follows the Link header
-to retrieve the final page of commits and returns the oldest commit listed.
-
-If the repository does not exist, is inaccessible, or the request fails:
+This function uses the same on-disk Git repository cache as related helpers:
 \itemize{
-\item Returns NA when date_only = TRUE
-\item Returns NULL otherwise
+\item \code{get_first_commit()}
+\item \code{get_first_export()}
+\item \code{get_first_call_github()}
 }
+
+The cache location is controlled by the \code{ggext.git_cache} option. Repositories
+cloned or refreshed by any of these functions are reused across calls, avoiding
+redundant network access.
 }
 \examples{
 \dontrun{
-get_first_repo_commit("tidyverse", "ggplot2")
+get_first_repo_commit("YuLab-SMU", "ggtree")
 get_first_repo_commit("tidyverse", "ggplot2", date_only = TRUE)
+
+options(ggext.git_cache = "~/Library/Caches/ggext_git")
 }
 
+}
+\seealso{
+\code{get_first_commit()}, \code{get_first_export()}, \code{get_first_call_github()}
 }
