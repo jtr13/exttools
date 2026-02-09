@@ -1,11 +1,11 @@
 # Find the first commit where a function is called in a GitHub repo
 
-Clones (or refreshes) a GitHub repository into a local cache directory,
-checks out a target ref (branch or default), then scans commits (oldest
-to newest) whose diffs under `dir` match a call-like pattern for `fname`
-(e.g. `foo(` or `pkg::foo(`). For each candidate commit, it verifies the
-call is present somewhere in the repository tree at that commit using
-`git grep`.
+Clones a GitHub repository into a local cache directory (if not already
+present), checks out a target ref (branch or default), then scans
+commits (oldest to newest) whose diffs under `dir` match a call-like
+pattern for `fname` (e.g. `foo(` or `pkg::foo(`). For each candidate
+commit, it verifies the call is present somewhere in the repository tree
+at that commit using `git grep`.
 
 ## Usage
 
@@ -75,6 +75,14 @@ If not found (or if the repo cannot be searched), returns `NA` when
 
 ## Details
 
+Unlike functions that track *latest* state, this function is concerned
+only with historical "firsts". Therefore, **if a cached clone already
+exists, no network fetch is performed**. The cached repository is
+assumed to contain a complete history.
+
+If the cached clone is detected to be shallow, partial, or corrupted, it
+is deleted and recloned to ensure correctness.
+
 The return value is either the commit date (when `date_only = TRUE`) or
 a one-row `data.frame` with commit metadata and a GitHub URL.
 
@@ -93,9 +101,6 @@ Candidate commits are obtained with `git log --reverse -G <regex>` under
 Each candidate is then validated by searching the repository *tree* at
 that commit with `git grep -E` for the same call-like pattern.
 
-If the local cached clone is corrupted or fetch fails, the cache
-directory for that repo is deleted and recloned.
-
 This function shares the same on-disk Git clone cache as
 [`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md)
 via the `ggext.git_cache` option. Repositories cloned by either function
@@ -104,16 +109,3 @@ are reused by the other.
 For best performance across sessions, set a persistent cache location:
 
     options(ggext.git_cache = "~/Library/Caches/ggext_git")
-
-## See also
-
-[`processx::run`](http://processx.r-lib.org/reference/run.md)
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-get_first_call_github("giabaio", "BCEA", "ggplot")
-get_first_call_github("giabaio", "BCEA", "ggplot", date_only = TRUE)
-} # }
-```

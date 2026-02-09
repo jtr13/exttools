@@ -19,8 +19,6 @@
   GitHub repo
 - [`get_first_export_cran()`](https://jtr13.github.io/exttools/reference/get_first_export_cran.md)
   : Find the first CRAN release exporting a symbol
-- [`get_first_export_github()`](https://jtr13.github.io/exttools/reference/get_first_export_github.md)
-  : Find the first commit where a function is exported
 - [`get_first_release()`](https://jtr13.github.io/exttools/reference/get_first_release.md)
   : Get CRAN location and first release date for an R package
 - [`get_first_repo_commit()`](https://jtr13.github.io/exttools/reference/get_first_repo_commit.md)
