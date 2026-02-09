@@ -11,7 +11,6 @@ LazyData: true
 Imports:
     tools,
     utils,
-    httr2,
     processx
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
