@@ -66,7 +66,7 @@
 #' `date_only = TRUE`, otherwise `NULL`.
 #'
 #' @export
-get_first_call_github <- function(owner, repo, fname,
+get_first_call_github <- function(owner, repo, fname = "ggplot",
                                   date_only = FALSE,
                                   branch = NULL,
                                   max_commits = Inf,

@@ -7,7 +7,7 @@
 get_first_call_github(
   owner,
   repo,
-  fname,
+  fname = "ggplot",
   date_only = FALSE,
   branch = NULL,
   max_commits = Inf,

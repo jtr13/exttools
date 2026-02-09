@@ -1,3 +1,65 @@
+#' Find the first commit where a symbol is explicitly exported on GitHub
+#'
+#' Identifies the earliest Git commit in which a given symbol becomes
+#' **explicitly exported** in a repository file (by default, the package
+#' `NAMESPACE`). The function clones the repository locally (once) into a
+#' cache directory and then searches *local* Git history for export directives.
+#'
+#' After the initial clone, all operations are local and do **not** use the
+#' GitHub API. This avoids rate limits and allows the function to work without
+#' Wi-Fi **as long as the repository has already been cloned into the cache**.
+#'
+#' The search looks for these explicit forms:
+#' \itemize{
+#'   \item \code{export(fname)}
+#'   \item \code{export("fname")}
+#'   \item \code{export('fname')}
+#' }
+#'
+#' Notes:
+#' \itemize{
+#'   \item This detects **explicit exports only**. It does not interpret
+#'   \code{exportPattern()} semantics.
+#'   \item The history search uses \code{git log -S} on the target file
+#'   (default: \code{NAMESPACE}); if the file never existed at the chosen ref,
+#'   the function returns \code{NULL} (or \code{as.Date(NA)} with \code{date_only = TRUE}).
+#'   \item No fetch/pull is performed. If the remote repository updates, you
+#'   must delete the cached clone to refresh it.
+#' }
+#'
+#' @param owner Character. GitHub account name (e.g. \code{"tidyverse"}).
+#' @param repo Character. GitHub repository name (e.g. \code{"ggplot2"}).
+#' @param fname Character. Symbol/function name to search for (e.g. \code{"geom_point"}).
+#' @param date_only Logical. If \code{TRUE}, return only the commit date as a
+#'   \code{Date}. If \code{FALSE} (default), return a one-row \code{data.frame}
+#'   with commit metadata.
+#' @param branch Character. Optional ref to check out before searching (branch,
+#'   tag, or commit-ish). If \code{NULL}, uses \code{origin/HEAD} when available;
+#'   otherwise uses \code{HEAD}.
+#' @param cache_dir Character. Directory used to cache cloned repositories.
+#'   Defaults to \code{getOption("ggext.git_cache", file.path(tempdir(),"gh_repo_cache"))}.
+#' @param file Character. Path (within the repo) to the file to search.
+#'   Defaults to \code{"NAMESPACE"}.
+#'
+#' @return If \code{date_only = TRUE}, a \code{Date} (or \code{as.Date(NA)} on failure).
+#'   Otherwise a one-row \code{data.frame} with columns:
+#'   \code{package}, \code{fname}, \code{first_gh}, \code{author}, \code{message},
+#'   \code{url}, \code{file}; or \code{NULL} on failure.
+#'
+#' @examples
+#' \dontrun{
+#' # Earliest explicit export date (requires git; clones once, then local)
+#' get_first_export_github("tidyverse", "ggplot2", "geom_point", date_only = TRUE)
+#'
+#' # Full commit metadata
+#' get_first_export_github("tidyverse", "ggplot2", "geom_point")
+#'
+#' # Search a different ref or file
+#' get_first_export_github("tidyverse", "ggplot2", "geom_point", branch = "main")
+#' get_first_export_github("someowner", "somerepo", "foo", file = "path/to/NAMESPACE")
+#' }
+#'
+#' @export
 get_first_export_github <- function(owner, repo, fname,
                                     date_only = FALSE,
                                     branch = NULL,
