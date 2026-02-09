@@ -26,7 +26,8 @@ get_first_call_github(
 verified call commit. Defaults to \code{FALSE}.}
 
 \item{branch}{Optional character scalar. Ref to check out before searching.
-If \code{NULL}/empty, the function uses \code{origin/HEAD} when available, otherwise \code{HEAD}.}
+If \code{NULL}/empty, the function uses \code{origin/HEAD} when available, otherwise
+\code{HEAD}.}
 
 \item{max_commits}{Maximum number of candidate commits to verify (in order).
 Use to cap runtime on very large histories. Defaults to \code{Inf} (no cap).}
@@ -47,13 +48,22 @@ If not found (or if the repo cannot be searched), returns \code{NA} when
 \code{date_only = TRUE}, otherwise \code{NULL}.
 }
 \description{
-Clones (or refreshes) a GitHub repository into a local cache directory, checks
-out a target ref (branch or default), then scans commits (oldest to newest)
-whose diffs under \code{dir} match a call-like pattern for \code{fname} (e.g. \verb{foo(} or
-\verb{pkg::foo(}). For each candidate commit, it verifies the call is present
-somewhere in the repository tree at that commit using \verb{git grep}.
+Clones a GitHub repository into a local cache directory (if not already
+present), checks out a target ref (branch or default), then scans commits
+(oldest to newest) whose diffs under \code{dir} match a call-like pattern for
+\code{fname} (e.g. \verb{foo(} or \verb{pkg::foo(}). For each candidate commit, it verifies
+the call is present somewhere in the repository tree at that commit using
+\verb{git grep}.
 }
 \details{
+Unlike functions that track \emph{latest} state, this function is concerned only
+with historical "firsts". Therefore, \strong{if a cached clone already exists, no
+network fetch is performed}. The cached repository is assumed to contain a
+complete history.
+
+If the cached clone is detected to be shallow, partial, or corrupted, it is
+deleted and recloned to ensure correctness.
+
 The return value is either the commit date (when \code{date_only = TRUE}) or a
 one-row \code{data.frame} with commit metadata and a GitHub URL.
 
@@ -61,8 +71,8 @@ This function emits diagnostic \code{message()} output when it cannot determine 
 answer (e.g., repository not found/inaccessible, checkout failed, git errors)
 or when \code{fname} is never called under \code{dir}.
 
-Candidate commits are obtained with \verb{git log --reverse -G <regex>} under \code{dir},
-using patterns that match \code{fname} calls like:
+Candidate commits are obtained with \verb{git log --reverse -G <regex>} under
+\code{dir}, using patterns that match \code{fname} calls like:
 \itemize{
 \item \verb{fname[[:space:]]*\\\\(}
 \item \verb{::fname[[:space:]]*\\\\(}
@@ -70,25 +80,12 @@ using patterns that match \code{fname} calls like:
 Each candidate is then validated by searching the repository \emph{tree} at that
 commit with \verb{git grep -E} for the same call-like pattern.
 
-If the local cached clone is corrupted or fetch fails, the cache directory for
-that repo is deleted and recloned.
-
-This function shares the same on-disk Git clone cache as \code{\link[=get_first_commit]{get_first_commit()}}
-via the \code{ggext.git_cache} option. Repositories cloned by either function are
-reused by the other.
+This function shares the same on-disk Git clone cache as
+\code{get_first_commit()} via the \code{ggext.git_cache} option. Repositories
+cloned by either function are reused by the other.
 
 For best performance across sessions, set a persistent cache location:
 \preformatted{
 options(ggext.git_cache = "~/Library/Caches/ggext_git")
 }
-}
-\examples{
-\dontrun{
-get_first_call_github("giabaio", "BCEA", "ggplot")
-get_first_call_github("giabaio", "BCEA", "ggplot", date_only = TRUE)
-}
-
-}
-\seealso{
-\code{\link[processx:run]{processx::run}}
 }

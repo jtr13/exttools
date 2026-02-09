@@ -1,10 +1,19 @@
 #' Find the first commit where a function is called in a GitHub repo
 #'
-#' Clones (or refreshes) a GitHub repository into a local cache directory, checks
-#' out a target ref (branch or default), then scans commits (oldest to newest)
-#' whose diffs under `dir` match a call-like pattern for `fname` (e.g. `foo(` or
-#' `pkg::foo(`). For each candidate commit, it verifies the call is present
-#' somewhere in the repository tree at that commit using `git grep`.
+#' Clones a GitHub repository into a local cache directory (if not already
+#' present), checks out a target ref (branch or default), then scans commits
+#' (oldest to newest) whose diffs under `dir` match a call-like pattern for
+#' `fname` (e.g. `foo(` or `pkg::foo(`). For each candidate commit, it verifies
+#' the call is present somewhere in the repository tree at that commit using
+#' `git grep`.
+#'
+#' Unlike functions that track *latest* state, this function is concerned only
+#' with historical "firsts". Therefore, **if a cached clone already exists, no
+#' network fetch is performed**. The cached repository is assumed to contain a
+#' complete history.
+#'
+#' If the cached clone is detected to be shallow, partial, or corrupted, it is
+#' deleted and recloned to ensure correctness.
 #'
 #' The return value is either the commit date (when `date_only = TRUE`) or a
 #' one-row `data.frame` with commit metadata and a GitHub URL.
@@ -19,7 +28,8 @@
 #' @param date_only Logical; if `TRUE`, return only the `Date` of the first
 #'   verified call commit. Defaults to `FALSE`.
 #' @param branch Optional character scalar. Ref to check out before searching.
-#'   If `NULL`/empty, the function uses `origin/HEAD` when available, otherwise `HEAD`.
+#'   If `NULL`/empty, the function uses `origin/HEAD` when available, otherwise
+#'   `HEAD`.
 #' @param max_commits Maximum number of candidate commits to verify (in order).
 #'   Use to cap runtime on very large histories. Defaults to `Inf` (no cap).
 #' @param cache_dir Directory used to cache cloned repositories. Defaults to
@@ -27,8 +37,8 @@
 #' @param dir Directory within the repo to search. Defaults to `"R"`.
 #'
 #' @details
-#' Candidate commits are obtained with `git log --reverse -G <regex>` under `dir`,
-#' using patterns that match `fname` calls like:
+#' Candidate commits are obtained with `git log --reverse -G <regex>` under
+#' `dir`, using patterns that match `fname` calls like:
 #' \itemize{
 #'   \item `fname[[:space:]]*\\(`
 #'   \item `::fname[[:space:]]*\\(`
@@ -36,12 +46,9 @@
 #' Each candidate is then validated by searching the repository *tree* at that
 #' commit with `git grep -E` for the same call-like pattern.
 #'
-#' If the local cached clone is corrupted or fetch fails, the cache directory for
-#' that repo is deleted and recloned.
-#'
-#' This function shares the same on-disk Git clone cache as [get_first_commit()]
-#' via the `ggext.git_cache` option. Repositories cloned by either function are
-#' reused by the other.
+#' This function shares the same on-disk Git clone cache as
+#' \code{get_first_commit()} via the `ggext.git_cache` option. Repositories
+#' cloned by either function are reused by the other.
 #'
 #' For best performance across sessions, set a persistent cache location:
 #' \preformatted{
@@ -58,15 +65,6 @@
 #' If not found (or if the repo cannot be searched), returns `NA` when
 #' `date_only = TRUE`, otherwise `NULL`.
 #'
-#' @examples
-#' \dontrun{
-#' get_first_call_github("giabaio", "BCEA", "ggplot")
-#' get_first_call_github("giabaio", "BCEA", "ggplot", date_only = TRUE)
-#' }
-#'
-#' @seealso
-#' \code{\link[processx:run]{processx::run}}
-#'
 #' @export
 get_first_call_github <- function(owner, repo, fname,
                                   date_only = FALSE,
@@ -77,6 +75,7 @@ get_first_call_github <- function(owner, repo, fname,
                                     file.path(tempdir(), "gh_repo_cache")
                                   ),
                                   dir = "R") {
+
   if (!requireNamespace("processx", quietly = TRUE)) {
     stop("Package 'processx' is required. Install it first.")
   }
@@ -94,7 +93,8 @@ get_first_call_github <- function(owner, repo, fname,
     if (date_only) as.Date(NA) else NULL
   }
 
-  if (any(is.na(c(owner, repo, fname))) || !nzchar(owner) || !nzchar(repo) || !nzchar(fname)) {
+  if (any(is.na(c(owner, repo, fname))) ||
+      !nzchar(owner) || !nzchar(repo) || !nzchar(fname)) {
     return(fail("invalid inputs (owner/repo/fname missing or empty)"))
   }
 
@@ -114,7 +114,7 @@ get_first_call_github <- function(owner, repo, fname,
     )
   }
 
-  # ---- clone or refresh ----
+  # ---- clone or reuse cache (NO FETCH) ----
   if (!dir.exists(file.path(repo_dir, ".git"))) {
     if (dir.exists(repo_dir)) unlink(repo_dir, recursive = TRUE, force = TRUE)
     dir.create(repo_dir, recursive = TRUE)
@@ -126,15 +126,16 @@ get_first_call_github <- function(owner, repo, fname,
       ))
     }
   } else {
-    res <- run_git(c("-C", repo_dir, "fetch", "--all", "--prune"))
-    if (res$status != 0L) {
+    # detect shallow / partial clone
+    chk <- run_git(c("-C", repo_dir, "rev-parse", "--is-shallow-repository"))
+    if (chk$status != 0L || trimws(chk$stdout) == "true") {
       unlink(repo_dir, recursive = TRUE, force = TRUE)
       dir.create(repo_dir, recursive = TRUE)
-      res2 <- run_git(c("clone", remote, repo_dir))
-      if (res2$status != 0L) {
+      res <- run_git(c("clone", remote, repo_dir))
+      if (res$status != 0L) {
         return(fail(
-          "failed to fetch cached repo and reclone failed",
-          paste(c(res$stdout, res$stderr, res2$stdout, res2$stderr), collapse = "\n")
+          "cached repo was shallow or corrupt and reclone failed",
+          paste(c(res$stdout, res$stderr), collapse = "\n")
         ))
       }
     }
@@ -143,9 +144,16 @@ get_first_call_github <- function(owner, repo, fname,
   # ---- choose ref ----
   ref <- branch
   if (is.null(ref) || !nzchar(ref)) {
-    res <- run_git(c("-C", repo_dir, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"))
+    res <- run_git(c(
+      "-C", repo_dir,
+      "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"
+    ))
     if (res$status == 0L && nzchar(res$stdout)) {
-      ref <- sub("^refs/remotes/origin/", "", trimws(strsplit(res$stdout, "\n", fixed = TRUE)[[1]][1]))
+      ref <- sub(
+        "^refs/remotes/origin/",
+        "",
+        trimws(strsplit(res$stdout, "\n", fixed = TRUE)[[1]][1])
+      )
     } else {
       ref <- "HEAD"
     }
@@ -169,7 +177,6 @@ get_first_call_github <- function(owner, repo, fname,
     lines[nzchar(lines)]
   }
 
-  # POSIX regex for -G (diff regex). Two patterns: plain and namespaced.
   pat_plain <- sprintf("%s[[:space:]]*\\(", fname)
   pat_ns    <- sprintf("::%s[[:space:]]*\\(", fname)
 
@@ -193,29 +200,20 @@ get_first_call_github <- function(owner, repo, fname,
   cand1 <- get_candidates(pat_plain)
   cand2 <- get_candidates(pat_ns)
 
-  if (inherits(cand1, "processx_result") || inherits(cand2, "processx_result")) {
+  if (inherits(cand1, "processx_result") ||
+      inherits(cand2, "processx_result")) {
     det <- c()
     if (inherits(cand1, "processx_result")) det <- c(det, attr(cand1, "err"))
     if (inherits(cand2, "processx_result")) det <- c(det, attr(cand2, "err"))
-    return(fail("git log failed while searching candidate commits", paste(det, collapse = "\n")))
+    return(fail("git log failed while searching candidate commits",
+                paste(det, collapse = "\n")))
   }
 
   lines <- unique(c(cand1, cand2))
   if (!length(lines)) {
-    chk <- run_git(c("-C", repo_dir, "ls-tree", "-r", "--name-only", ref, "--", dir))
-    if (chk$status != 0L) {
-      return(fail(
-        sprintf("could not determine (git ls-tree failed for '%s')", dir),
-        paste(c(chk$stdout, chk$stderr), collapse = "\n")
-      ))
-    }
-    if (!nzchar(chk$stdout)) {
-      return(fail(sprintf("directory '%s' not found in repo at selected ref", dir)))
-    }
     return(fail(sprintf("symbol never called under %s/ (no candidate commits)", dir)))
   }
 
-  # ERE for verification with git grep
   grep_plain <- sprintf("(^|[^A-Za-z0-9_.])%s[[:space:]]*\\(", fname)
   grep_ns    <- sprintf("(^|[^A-Za-z0-9_.]):{2}%s[[:space:]]*\\(", fname)
 
@@ -240,10 +238,9 @@ get_first_call_github <- function(owner, repo, fname,
       gg2 <- run_git(c("-C", repo_dir, "grep", "-n", "-E", grep_ns, sha, "--", dir))
     }
 
-    have <- (gg$status == 0L && nzchar(gg$stdout)) ||
-      (!is.null(gg2) && gg2$status == 0L && nzchar(gg2$stdout))
+    if ((gg$status == 0L && nzchar(gg$stdout)) ||
+        (!is.null(gg2) && gg2$status == 0L && nzchar(gg2$stdout))) {
 
-    if (have) {
       src <- if (gg$status == 0L && nzchar(gg$stdout)) gg$stdout else gg2$stdout
       first_hit <- strsplit(src, "\n", fixed = TRUE)[[1]][1]
       file_hit <- sub(":.*$", "", sub("^[^:]*:", "", first_hit))
