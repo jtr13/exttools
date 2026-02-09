@@ -1,32 +1,48 @@
-
 #' Find the first commit in a GitHub repository
 #'
 #' Finds the earliest (root) commit in a GitHub repository using the GitHub
-#' REST API. Does not require a local clone.
+#' REST API. The function does not require a local clone and queries GitHub
+#' directly via the commits endpoint.
 #'
-#' The function follows pagination links to retrieve the oldest commit reachable
-#' from the specified ref.
+#' Pagination is handled implicitly: the function follows the Link header
+#' to retrieve the final page of commits and returns the oldest commit listed.
 #'
-#' @param owner GitHub repository owner.
-#' @param repo GitHub repository name.
-#' @param sha Optional commit SHA or branch name to start from. Defaults to the
-#'   repository’s default branch.
-#' @param date_only Logical. If TRUE, return only the release date as a scalar.
-
+#' If the repository does not exist, is inaccessible, or the request fails:
+#' \itemize{
+#'   \item Returns NA when date_only = TRUE
+#'   \item Returns NULL otherwise
+#' }
+#'
+#' @param owner Character. GitHub repository owner.
+#' @param repo Character. GitHub repository name.
+#' @param sha Optional character. Commit SHA or branch name to start from.
+#'   Defaults to the repository's default branch.
+#' @param date_only Logical. If TRUE, return only the commit date
+#'   as a Date scalar.
 #'
 #' @return
-#' A one-row data frame with commit SHA, first_repo, author, message, and URL.
+#' When date_only = TRUE, a Date scalar giving the date of the first commit,
+#' or NA if the repository is not found.
+#'
+#' When date_only = FALSE, a one-row data frame with columns:
+#' \describe{
+#'   \item{first_repo}{Date of the first commit}
+#'   \item{author}{Commit author name}
+#'   \item{message}{Commit message}
+#'   \item{url}{URL of the commit on GitHub}
+#' }
+#' or NULL if the repository is not found.
 #'
 #' @examples
 #' \dontrun{
 #' get_first_repo_commit("tidyverse", "ggplot2")
+#' get_first_repo_commit("tidyverse", "ggplot2", date_only = TRUE)
 #' }
 #'
 #' @export
-
-
 get_first_repo_commit <- function(owner, repo, sha = NULL,
                                   date_only = FALSE) {
+
   base <- sprintf("https://api.github.com/repos/%s/%s/commits", owner, repo)
 
   req <- httr2::request(base) |>
@@ -36,7 +52,11 @@ get_first_repo_commit <- function(owner, repo, sha = NULL,
     req <- httr2::req_url_query(req, sha = sha)
   }
 
-  r1 <- httr2::req_perform(req)
+  r1 <- tryCatch(httr2::req_perform(req), error = function(e) NULL)
+  if (is.null(r1)) {
+    return(if (date_only) NA else NULL)
+  }
+
   link <- httr2::resp_header(r1, "link")
 
   if (is.null(link) || is.na(link) || !nzchar(link)) {
@@ -58,12 +78,10 @@ get_first_repo_commit <- function(owner, repo, sha = NULL,
   }
 
   data.frame(
-    first_repo    = as.Date(date),
-    author  = cmt$commit$author$name,
-    message = cmt$commit$message,
-    url     = cmt$html_url,
+    first_repo = as.Date(date),
+    author     = cmt$commit$author$name,
+    message    = cmt$commit$message,
+    url        = cmt$html_url,
     stringsAsFactors = FALSE
   )
 }
-
-
