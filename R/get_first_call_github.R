@@ -23,7 +23,7 @@
 #' or when `fname` is never called under `dir`.
 #'
 #' @param github_user Character scalar. GitHub username or organization.
-#' @param repo Character scalar. GitHub repository name.
+#' @param github_repo Character scalar. GitHub repository name.
 #' @param fname Character scalar. Symbol to search for (e.g. `"ggplot"`).
 #' @param date_only Logical; if `TRUE`, return only the `Date` of the first
 #'   verified call commit. Defaults to `FALSE`.

@@ -18,6 +18,8 @@ get_first_call_github(
 \arguments{
 \item{github_user}{Character scalar. GitHub username or organization.}
 
+\item{github_repo}{Character scalar. GitHub repository name.}
+
 \item{fname}{Character scalar. Symbol to search for (e.g. \code{"ggplot"}).}
 
 \item{date_only}{Logical; if \code{TRUE}, return only the \code{Date} of the first
@@ -34,8 +36,6 @@ Use to cap runtime on very large histories. Defaults to \code{Inf} (no cap).}
 \code{getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))}.}
 
 \item{dir}{Directory within the repo to search. Defaults to \code{"R"}.}
-
-\item{repo}{Character scalar. GitHub repository name.}
 }
 \value{
 If a call is found:
