@@ -5,8 +5,8 @@
 \title{Find the first commit where a function is called in a GitHub repo}
 \usage{
 get_first_call_github(
-  owner,
-  repo,
+  github_user,
+  github_repo,
   fname = "ggplot",
   date_only = FALSE,
   branch = NULL,
@@ -16,9 +16,7 @@ get_first_call_github(
 )
 }
 \arguments{
-\item{owner}{Character scalar. GitHub username or organization.}
-
-\item{repo}{Character scalar. GitHub repository name.}
+\item{github_user}{Character scalar. GitHub username or organization.}
 
 \item{fname}{Character scalar. Symbol to search for (e.g. \code{"ggplot"}).}
 
@@ -36,13 +34,15 @@ Use to cap runtime on very large histories. Defaults to \code{Inf} (no cap).}
 \code{getOption("ggext.git_cache", file.path(tempdir(), "gh_repo_cache"))}.}
 
 \item{dir}{Directory within the repo to search. Defaults to \code{"R"}.}
+
+\item{repo}{Character scalar. GitHub repository name.}
 }
 \value{
 If a call is found:
 \itemize{
 \item If \code{date_only = TRUE}, a \code{Date}.
 \item Otherwise, a one-row \code{data.frame} with columns:
-\code{owner}, \code{repo}, \code{fname}, \code{first_call}, \code{author}, \code{message}, \code{url}, \code{file}.
+\code{github_user}, \code{repo}, \code{fname}, \code{first_call}, \code{author}, \code{message}, \code{url}, \code{file}.
 }
 If not found (or if the repository cannot be searched), returns \code{NA} when
 \code{date_only = TRUE}, otherwise \code{NULL}.

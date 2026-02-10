@@ -22,7 +22,7 @@
 #' answer (e.g., repository not found/inaccessible, checkout failed, git errors)
 #' or when `fname` is never called under `dir`.
 #'
-#' @param owner Character scalar. GitHub username or organization.
+#' @param github_user Character scalar. GitHub username or organization.
 #' @param repo Character scalar. GitHub repository name.
 #' @param fname Character scalar. Symbol to search for (e.g. `"ggplot"`).
 #' @param date_only Logical; if `TRUE`, return only the `Date` of the first
@@ -60,13 +60,13 @@
 #' \itemize{
 #'   \item If `date_only = TRUE`, a `Date`.
 #'   \item Otherwise, a one-row `data.frame` with columns:
-#'     `owner`, `repo`, `fname`, `first_call`, `author`, `message`, `url`, `file`.
+#'     `github_user`, `repo`, `fname`, `first_call`, `author`, `message`, `url`, `file`.
 #' }
 #' If not found (or if the repository cannot be searched), returns `NA` when
 #' `date_only = TRUE`, otherwise `NULL`.
 #'
 #' @export
-get_first_call_github <- function(owner, repo, fname = "ggplot",
+get_first_call_github <- function(github_user, github_repo, fname = "ggplot",
                                   date_only = FALSE,
                                   branch = NULL,
                                   max_commits = Inf,
@@ -80,28 +80,28 @@ get_first_call_github <- function(owner, repo, fname = "ggplot",
     stop("Package 'processx' is required. Install it first.")
   }
 
-  message("Processing: ", owner, " ", repo, " ", fname)
+  message("Processing: ", github_user, " ", github_repo, " ", fname)
 
   fail <- function(reason, details = NULL) {
     message(
       paste0(
         "get_first_call_github(): ", reason,
-        " [", owner, "/", repo, " :: ", fname, "]",
+        " [", github_user, "/", github_repo, " :: ", fname, "]",
         if (!is.null(details) && nzchar(details)) paste0("\n", details) else ""
       )
     )
     if (date_only) as.Date(NA) else NULL
   }
 
-  if (any(is.na(c(owner, repo, fname))) ||
-      !nzchar(owner) || !nzchar(repo) || !nzchar(fname)) {
-    return(fail("invalid inputs (owner/repo/fname missing or empty)"))
+  if (any(is.na(c(github_user, github_repo, fname))) ||
+      !nzchar(github_user) || !nzchar(github_repo) || !nzchar(fname)) {
+    return(fail("invalid inputs (github_user/github_repo/fname missing or empty)"))
   }
 
   if (!dir.exists(cache_dir)) dir.create(cache_dir, recursive = TRUE)
 
-  repo_dir <- file.path(cache_dir, paste0(owner, "__", repo))
-  remote   <- sprintf("https://github.com/%s/%s.git", owner, repo)
+  repo_dir <- file.path(cache_dir, paste0(github_user, "__", github_repo))
+  remote   <- sprintf("https://github.com/%s/%s.git", github_user, github_repo)
 
   run_git <- function(args) {
     processx::run(
@@ -248,13 +248,13 @@ get_first_call_github <- function(owner, repo, fname = "ggplot",
       if (isTRUE(date_only)) return(dt)
 
       return(data.frame(
-        owner      = owner,
-        repo       = repo,
+        github_user      = github_user,
+        github_repo       = github_repo,
         fname      = fname,
         first_call = dt,
         author     = au,
         message    = msg,
-        url        = sprintf("https://github.com/%s/%s/commit/%s", owner, repo, sha),
+        url        = sprintf("https://github.com/%s/%s/commit/%s", github_user, github_repo, sha),
         file       = file_hit
       ))
     }
