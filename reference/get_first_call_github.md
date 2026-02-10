@@ -11,8 +11,8 @@ at that commit using `git grep`.
 
 ``` r
 get_first_call_github(
-  owner,
-  repo,
+  github_user,
+  github_repo,
   fname = "ggplot",
   date_only = FALSE,
   branch = NULL,
@@ -24,13 +24,9 @@ get_first_call_github(
 
 ## Arguments
 
-- owner:
+- github_user:
 
   Character scalar. GitHub username or organization.
-
-- repo:
-
-  Character scalar. GitHub repository name.
 
 - fname:
 
@@ -61,13 +57,17 @@ get_first_call_github(
 
   Directory within the repo to search. Defaults to `"R"`.
 
+- repo:
+
+  Character scalar. GitHub repository name.
+
 ## Value
 
 If a call is found:
 
 - If `date_only = TRUE`, a `Date`.
 
-- Otherwise, a one-row `data.frame` with columns: `owner`, `repo`,
+- Otherwise, a one-row `data.frame` with columns: `github_user`, `repo`,
   `fname`, `first_call`, `author`, `message`, `url`, `file`.
 
 If not found (or if the repository cannot be searched), returns `NA`

@@ -54,8 +54,8 @@ the call is present somewhere in the repository tree at that commit using
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_first_call_github</span><span class="op">(</span></span>
-<span>  <span class="va">owner</span>,</span>
-<span>  <span class="va">repo</span>,</span>
+<span>  <span class="va">github_user</span>,</span>
+<span>  <span class="va">github_repo</span>,</span>
 <span>  fname <span class="op">=</span> <span class="st">"ggplot"</span>,</span>
 <span>  date_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  branch <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -69,12 +69,8 @@ the call is present somewhere in the repository tree at that commit using
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-owner">owner<a class="anchor" aria-label="anchor" href="#arg-owner"></a></dt>
+<dl><dt id="arg-github-user">github_user<a class="anchor" aria-label="anchor" href="#arg-github-user"></a></dt>
 <dd><p>Character scalar. GitHub username or organization.</p></dd>
-
-
-<dt id="arg-repo">repo<a class="anchor" aria-label="anchor" href="#arg-repo"></a></dt>
-<dd><p>Character scalar. GitHub repository name.</p></dd>
 
 
 <dt id="arg-fname">fname<a class="anchor" aria-label="anchor" href="#arg-fname"></a></dt>
@@ -105,12 +101,16 @@ Use to cap runtime on very large histories. Defaults to <code>Inf</code> (no cap
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
 <dd><p>Directory within the repo to search. Defaults to <code>"R"</code>.</p></dd>
 
+
+<dt id="arg-repo">repo<a class="anchor" aria-label="anchor" href="#arg-repo"></a></dt>
+<dd><p>Character scalar. GitHub repository name.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>If a call is found:</p><ul><li><p>If <code>date_only = TRUE</code>, a <code>Date</code>.</p></li>
 <li><p>Otherwise, a one-row <code>data.frame</code> with columns:
-<code>owner</code>, <code>repo</code>, <code>fname</code>, <code>first_call</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
+<code>github_user</code>, <code>repo</code>, <code>fname</code>, <code>first_call</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
 </ul><p>If not found (or if the repository cannot be searched), returns <code>NA</code> when
 <code>date_only = TRUE</code>, otherwise <code>NULL</code>.</p>
     </div>
