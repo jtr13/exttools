@@ -16,7 +16,7 @@ get_first_call_github(
 )
 }
 \arguments{
-\item{owner}{Character scalar. GitHub username/organization.}
+\item{owner}{Character scalar. GitHub username or organization.}
 
 \item{repo}{Character scalar. GitHub repository name.}
 
@@ -26,8 +26,8 @@ get_first_call_github(
 verified call commit. Defaults to \code{FALSE}.}
 
 \item{branch}{Optional character scalar. Ref to check out before searching.
-If \code{NULL}/empty, the function uses \code{origin/HEAD} when available, otherwise
-\code{HEAD}.}
+If \code{NULL} or empty, the function uses \code{origin/HEAD} when available,
+otherwise \code{HEAD}.}
 
 \item{max_commits}{Maximum number of candidate commits to verify (in order).
 Use to cap runtime on very large histories. Defaults to \code{Inf} (no cap).}
@@ -42,9 +42,9 @@ If a call is found:
 \itemize{
 \item If \code{date_only = TRUE}, a \code{Date}.
 \item Otherwise, a one-row \code{data.frame} with columns:
-\code{package}, \code{fname}, \code{first_call}, \code{author}, \code{message}, \code{url}, \code{file}.
+\code{owner}, \code{repo}, \code{fname}, \code{first_call}, \code{author}, \code{message}, \code{url}, \code{file}.
 }
-If not found (or if the repo cannot be searched), returns \code{NA} when
+If not found (or if the repository cannot be searched), returns \code{NA} when
 \code{date_only = TRUE}, otherwise \code{NULL}.
 }
 \description{
@@ -61,8 +61,8 @@ with historical "firsts". Therefore, \strong{if a cached clone already exists, n
 network fetch is performed}. The cached repository is assumed to contain a
 complete history.
 
-If the cached clone is detected to be shallow, partial, or corrupted, it is
-deleted and recloned to ensure correctness.
+If the cached clone is detected to be shallow or invalid, it is deleted and
+recloned to ensure correctness.
 
 The return value is either the commit date (when \code{date_only = TRUE}) or a
 one-row \code{data.frame} with commit metadata and a GitHub URL.

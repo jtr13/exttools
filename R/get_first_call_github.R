@@ -12,8 +12,8 @@
 #' network fetch is performed**. The cached repository is assumed to contain a
 #' complete history.
 #'
-#' If the cached clone is detected to be shallow, partial, or corrupted, it is
-#' deleted and recloned to ensure correctness.
+#' If the cached clone is detected to be shallow or invalid, it is deleted and
+#' recloned to ensure correctness.
 #'
 #' The return value is either the commit date (when `date_only = TRUE`) or a
 #' one-row `data.frame` with commit metadata and a GitHub URL.
@@ -22,14 +22,14 @@
 #' answer (e.g., repository not found/inaccessible, checkout failed, git errors)
 #' or when `fname` is never called under `dir`.
 #'
-#' @param owner Character scalar. GitHub username/organization.
+#' @param owner Character scalar. GitHub username or organization.
 #' @param repo Character scalar. GitHub repository name.
 #' @param fname Character scalar. Symbol to search for (e.g. `"ggplot"`).
 #' @param date_only Logical; if `TRUE`, return only the `Date` of the first
 #'   verified call commit. Defaults to `FALSE`.
 #' @param branch Optional character scalar. Ref to check out before searching.
-#'   If `NULL`/empty, the function uses `origin/HEAD` when available, otherwise
-#'   `HEAD`.
+#'   If `NULL` or empty, the function uses `origin/HEAD` when available,
+#'   otherwise `HEAD`.
 #' @param max_commits Maximum number of candidate commits to verify (in order).
 #'   Use to cap runtime on very large histories. Defaults to `Inf` (no cap).
 #' @param cache_dir Directory used to cache cloned repositories. Defaults to
@@ -47,7 +47,7 @@
 #' commit with `git grep -E` for the same call-like pattern.
 #'
 #' This function shares the same on-disk Git clone cache as
-#' \code{get_first_commit()} via the `ggext.git_cache` option. Repositories
+#' `get_first_commit()` via the `ggext.git_cache` option. Repositories
 #' cloned by either function are reused by the other.
 #'
 #' For best performance across sessions, set a persistent cache location:
@@ -60,9 +60,9 @@
 #' \itemize{
 #'   \item If `date_only = TRUE`, a `Date`.
 #'   \item Otherwise, a one-row `data.frame` with columns:
-#'     `package`, `fname`, `first_call`, `author`, `message`, `url`, `file`.
+#'     `owner`, `repo`, `fname`, `first_call`, `author`, `message`, `url`, `file`.
 #' }
-#' If not found (or if the repo cannot be searched), returns `NA` when
+#' If not found (or if the repository cannot be searched), returns `NA` when
 #' `date_only = TRUE`, otherwise `NULL`.
 #'
 #' @export
@@ -248,7 +248,8 @@ get_first_call_github <- function(owner, repo, fname = "ggplot",
       if (isTRUE(date_only)) return(dt)
 
       return(data.frame(
-        package    = repo,
+        owner      = owner,
+        repo       = repo,
         fname      = fname,
         first_call = dt,
         author     = au,
