@@ -28,6 +28,10 @@ get_first_call_github(
 
   Character scalar. GitHub username or organization.
 
+- github_repo:
+
+  Character scalar. GitHub repository name.
+
 - fname:
 
   Character scalar. Symbol to search for (e.g. `"ggplot"`).
@@ -56,10 +60,6 @@ get_first_call_github(
 - dir:
 
   Directory within the repo to search. Defaults to `"R"`.
-
-- repo:
-
-  Character scalar. GitHub repository name.
 
 ## Value
 
