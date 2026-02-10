@@ -26,7 +26,7 @@ get_first_call_github(
 
 - owner:
 
-  Character scalar. GitHub username/organization.
+  Character scalar. GitHub username or organization.
 
 - repo:
 
@@ -44,7 +44,7 @@ get_first_call_github(
 - branch:
 
   Optional character scalar. Ref to check out before searching. If
-  `NULL`/empty, the function uses `origin/HEAD` when available,
+  `NULL` or empty, the function uses `origin/HEAD` when available,
   otherwise `HEAD`.
 
 - max_commits:
@@ -67,11 +67,11 @@ If a call is found:
 
 - If `date_only = TRUE`, a `Date`.
 
-- Otherwise, a one-row `data.frame` with columns: `package`, `fname`,
-  `first_call`, `author`, `message`, `url`, `file`.
+- Otherwise, a one-row `data.frame` with columns: `owner`, `repo`,
+  `fname`, `first_call`, `author`, `message`, `url`, `file`.
 
-If not found (or if the repo cannot be searched), returns `NA` when
-`date_only = TRUE`, otherwise `NULL`.
+If not found (or if the repository cannot be searched), returns `NA`
+when `date_only = TRUE`, otherwise `NULL`.
 
 ## Details
 
@@ -80,8 +80,8 @@ only with historical "firsts". Therefore, **if a cached clone already
 exists, no network fetch is performed**. The cached repository is
 assumed to contain a complete history.
 
-If the cached clone is detected to be shallow, partial, or corrupted, it
-is deleted and recloned to ensure correctness.
+If the cached clone is detected to be shallow or invalid, it is deleted
+and recloned to ensure correctness.
 
 The return value is either the commit date (when `date_only = TRUE`) or
 a one-row `data.frame` with commit metadata and a GitHub URL.

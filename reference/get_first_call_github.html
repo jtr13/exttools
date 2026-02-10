@@ -70,7 +70,7 @@ the call is present somewhere in the repository tree at that commit using
 
 
 <dl><dt id="arg-owner">owner<a class="anchor" aria-label="anchor" href="#arg-owner"></a></dt>
-<dd><p>Character scalar. GitHub username/organization.</p></dd>
+<dd><p>Character scalar. GitHub username or organization.</p></dd>
 
 
 <dt id="arg-repo">repo<a class="anchor" aria-label="anchor" href="#arg-repo"></a></dt>
@@ -88,8 +88,8 @@ verified call commit. Defaults to <code>FALSE</code>.</p></dd>
 
 <dt id="arg-branch">branch<a class="anchor" aria-label="anchor" href="#arg-branch"></a></dt>
 <dd><p>Optional character scalar. Ref to check out before searching.
-If <code>NULL</code>/empty, the function uses <code>origin/HEAD</code> when available, otherwise
-<code>HEAD</code>.</p></dd>
+If <code>NULL</code> or empty, the function uses <code>origin/HEAD</code> when available,
+otherwise <code>HEAD</code>.</p></dd>
 
 
 <dt id="arg-max-commits">max_commits<a class="anchor" aria-label="anchor" href="#arg-max-commits"></a></dt>
@@ -110,8 +110,8 @@ Use to cap runtime on very large histories. Defaults to <code>Inf</code> (no cap
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>If a call is found:</p><ul><li><p>If <code>date_only = TRUE</code>, a <code>Date</code>.</p></li>
 <li><p>Otherwise, a one-row <code>data.frame</code> with columns:
-<code>package</code>, <code>fname</code>, <code>first_call</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
-</ul><p>If not found (or if the repo cannot be searched), returns <code>NA</code> when
+<code>owner</code>, <code>repo</code>, <code>fname</code>, <code>first_call</code>, <code>author</code>, <code>message</code>, <code>url</code>, <code>file</code>.</p></li>
+</ul><p>If not found (or if the repository cannot be searched), returns <code>NA</code> when
 <code>date_only = TRUE</code>, otherwise <code>NULL</code>.</p>
     </div>
     <div class="section level2">
@@ -120,8 +120,8 @@ Use to cap runtime on very large histories. Defaults to <code>Inf</code> (no cap
 with historical "firsts". Therefore, <strong>if a cached clone already exists, no
 network fetch is performed</strong>. The cached repository is assumed to contain a
 complete history.</p>
-<p>If the cached clone is detected to be shallow, partial, or corrupted, it is
-deleted and recloned to ensure correctness.</p>
+<p>If the cached clone is detected to be shallow or invalid, it is deleted and
+recloned to ensure correctness.</p>
 <p>The return value is either the commit date (when <code>date_only = TRUE</code>) or a
 one-row <code>data.frame</code> with commit metadata and a GitHub URL.</p>
 <p>This function emits diagnostic <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> output when it cannot determine an
