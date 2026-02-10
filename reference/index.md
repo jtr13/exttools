@@ -12,6 +12,9 @@
   : Extract ggplot2 grammar components from a GitHub repository
 - [`get_first_all()`](https://jtr13.github.io/exttools/reference/get_first_all.md)
   : Get “first seen” dates for a symbol across GitHub + CRAN
+- [`get_first_call_cran()`](https://jtr13.github.io/exttools/reference/get_first_call_cran.md)
+  : Find the first CRAN release containing a call to a function in an R
+  file
 - [`get_first_call_github()`](https://jtr13.github.io/exttools/reference/get_first_call_github.md)
   : Find the first commit where a function is called in a GitHub repo
 - [`get_first_commit()`](https://jtr13.github.io/exttools/reference/get_first_commit.md)
