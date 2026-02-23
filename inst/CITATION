@@ -1,0 +1,10 @@
+citHeader("To cite exttools in publications:")
+
+citEntry(
+  entry  = "Manual",
+  title  = "exttools: Tools for Analyzing Extension Packages in the Grammar of Graphics Ecosystem",
+  author = person("Joyce", "Robbins"),
+  year   = "2026",
+  note   = "R package version 0.1.0",
+  url    = "https://github.com/jtr13/exttools"
+)
