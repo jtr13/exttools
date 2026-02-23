@@ -1,6 +1,6 @@
 Package: exttools
 Type: Package
-Title: Tools for Analyzing Extension Packages in the Grammar of Graphics Ecosystem
+Title: Tools for Analyzing ggplot2 Extension Packages
 Version: 0.1.0
 Authors@R: person("Joyce", "Robbins", role = c("aut", "cre"), email = "jtr13@columbia.edu")
 Description: Utilities for identifying ggplot2 dependencies and grammar components
