@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/jtr13/exttools/blob/main/DESCRIPTION)
+[`inst/CITATION`](https://github.com/jtr13/exttools/blob/main/inst/CITATION)
 
 Robbins J (2026). *exttools: Tools for Analyzing Extension Packages in
 the Grammar of Graphics Ecosystem*. R package version 0.1.0,
