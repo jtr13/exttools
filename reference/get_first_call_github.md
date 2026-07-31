@@ -108,4 +108,5 @@ are reused by the other.
 
 For best performance across sessions, set a persistent cache location:
 
+
     options(ggext.git_cache = "~/Library/Caches/ggext_git")

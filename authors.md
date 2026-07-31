@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/jtr13/exttools/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/jtr13/exttools/blob/v0.1.0/inst/CITATION)
 
 Robbins J (2026). *exttools: Tools for Analyzing ggplot2 Extension
 Packages*. R package version 0.1.0, <https://github.com/jtr13/exttools>.

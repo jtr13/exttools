@@ -102,6 +102,7 @@ directory for that repo is deleted and recloned.
 
 For best performance across sessions, set a persistent cache location:
 
+
     options(ggext.git_cache = "~/Library/Caches/ggext_git")
 
 ## See also
