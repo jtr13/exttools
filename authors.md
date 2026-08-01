@@ -7,12 +7,10 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/jtr13/exttools/blob/main/inst/CITATION)
+[`DESCRIPTION`](https://github.com/jtr13/exttools/blob/main/DESCRIPTION)
 
 Robbins J (2026). *exttools: Tools for Analyzing ggplot2 Extension
-Packages*.
-[doi:10.5281/zenodo.21729118](https://doi.org/10.5281/zenodo.21729118).
-R package version 0.1.0, <https://github.com/jtr13/exttools>.
+Packages*. R package version 0.1.0, <https://github.com/jtr13/exttools>.
 
     @Manual{,
       title = {exttools: Tools for Analyzing ggplot2 Extension Packages},
@@ -20,5 +18,4 @@ R package version 0.1.0, <https://github.com/jtr13/exttools>.
       year = {2026},
       note = {R package version 0.1.0},
       url = {https://github.com/jtr13/exttools},
-      doi = {https://doi.org/10.5281/zenodo.21729118},
     }
